@@ -8,7 +8,6 @@ let siteMonitorTimer: NodeJS.Timeout | null = null;
 let isRunning = false;
 let isCheckingSites = false;
 let lastRun: string | null = null;
-let nextRunEstimate: string | null = null;
 
 function minutesToCron(minutes: number): string {
   if (minutes < 60) return `*/${minutes} * * * *`;
@@ -18,6 +17,16 @@ function minutesToCron(minutes: number): string {
 }
 
 const ROUND_ROBIN_PROVIDERS: SpeedTestProvider[] = ['cloudflare', 'google', 'ookla'];
+
+function nextScheduledRun(intervalMin: number, now = new Date()): string {
+  const dayStart = new Date(now);
+  dayStart.setHours(0, 0, 0, 0);
+
+  const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes();
+  const nextSlotMinutes = (Math.floor(minutesSinceMidnight / intervalMin) + 1) * intervalMin;
+
+  return new Date(dayStart.getTime() + nextSlotMinutes * 60_000).toISOString();
+}
 
 function nextProvider(): SpeedTestProvider {
   if (getSetting('speed_test_auto_round_robin') !== 'true') {
@@ -83,10 +92,6 @@ export function startScheduler() {
 
   currentTask = cron.schedule(expression, runAllTests);
 
-  const now = new Date();
-  const next = new Date(now.getTime() + intervalMin * 60_000);
-  nextRunEstimate = next.toISOString();
-
   siteMonitorTimer = setInterval(runDueSiteChecks, 60_000);
   void runDueSiteChecks();
 }
@@ -107,7 +112,12 @@ export function restartScheduler() {
 }
 
 export function getSchedulerStatus() {
-  return { isRunning, lastRun, nextRun: nextRunEstimate };
+  const intervalMin = parseInt(getSetting('test_interval_minutes') ?? '120', 10);
+  return {
+    isRunning,
+    lastRun,
+    nextRun: nextScheduledRun(intervalMin),
+  };
 }
 
 export { runAllTests };

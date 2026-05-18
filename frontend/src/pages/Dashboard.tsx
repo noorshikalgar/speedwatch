@@ -237,7 +237,7 @@ export function Dashboard() {
     queryFn: () => latencyApi.list(latencyRange),
     refetchInterval: 60_000,
   });
-  const { data: status } = useQuery({ queryKey: ['status'], queryFn: speedApi.status, refetchInterval: 10_000 });
+  const { data: status } = useQuery({ queryKey: ['status'], queryFn: speedApi.status, refetchInterval: 2_000 });
 
   const runMutation = useMutation({
     mutationFn: speedApi.run,
@@ -291,7 +291,7 @@ export function Dashboard() {
           <div className="flex items-center border border-emerald-800/40 bg-emerald-950/30 text-[11px] uppercase tracking-wider overflow-hidden tabular-nums">
             <span className="px-2 py-1 text-emerald-600">Next</span>
             <span className="px-2 py-1 text-emerald-300 border-l border-emerald-800/40">
-              {isTestRunning ? 'running…' : formatTimeOnly(status.nextRun, settings?.display_timezone)}
+              {formatTimeOnly(status.nextRun, settings?.display_timezone)}
             </span>
           </div>
         )}

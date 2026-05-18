@@ -40,6 +40,9 @@ export function Header({ isRunning, nextRun }: HeaderProps) {
     setTheme(THEME_LIST[(idx + 1) % THEME_LIST.length]);
   }
 
+  const isNextRunDue = nextRun ? new Date(nextRun).getTime() <= Date.now() : false;
+  const showCountdown = !!nextRun && !isRunning && !isNextRunDue;
+
   return (
     <header className="border-b border-border bg-card px-4 py-2.5 flex items-center justify-between">
       {/* Brand */}
@@ -52,7 +55,7 @@ export function Header({ isRunning, nextRun }: HeaderProps) {
 
       <div className="flex items-center gap-1.5">
         {/* right side: countdown + testing indicator */}
-        {nextRun && (
+        {showCountdown && (
           <span className="hidden md:inline-flex items-center gap-1.5 border border-emerald-800/40 bg-emerald-950/30 px-2 py-1 text-[11px] uppercase tracking-wider tabular-nums mr-1">
             <span className="text-emerald-600">next in</span>
             <span className="text-emerald-300">{fmtCountdown(nextRun)}</span>
