@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
-export type Theme = 'void' | 'terminal' | 'paper';
+export type Theme = 'void' | 'terminal' | 'paper' | 'midnight' | 'graphite' | 'ember';
 
 interface ThemeContextType {
   theme: Theme;
@@ -13,20 +13,25 @@ const THEME_LABELS: Record<Theme, string> = {
   void: 'Void',
   terminal: 'Terminal',
   paper: 'Paper',
+  midnight: 'Midnight',
+  graphite: 'Graphite',
+  ember: 'Ember',
 };
 
-export const THEME_LIST: Theme[] = ['void', 'terminal', 'paper'];
+export const THEME_LIST: Theme[] = ['void', 'midnight', 'graphite', 'ember', 'terminal', 'paper'];
 export { THEME_LABELS };
+
+const THEMES: Theme[] = ['void', 'terminal', 'paper', 'midnight', 'graphite', 'ember'];
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     const stored = localStorage.getItem('sw_theme') as Theme;
-    return (['void', 'terminal', 'paper'] as Theme[]).includes(stored) ? stored : 'void';
+    return THEMES.includes(stored) ? stored : 'void';
   });
 
   useEffect(() => {
     const el = document.documentElement;
-    el.classList.remove('theme-void', 'theme-terminal', 'theme-paper');
+    el.classList.remove('theme-void', 'theme-terminal', 'theme-paper', 'theme-midnight', 'theme-graphite', 'theme-ember');
     el.classList.add(`theme-${theme}`);
   }, [theme]);
 

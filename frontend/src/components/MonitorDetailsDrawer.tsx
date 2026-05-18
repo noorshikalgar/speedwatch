@@ -1,5 +1,5 @@
 import { ExternalLink, X } from 'lucide-react';
-import type React from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { LatencyCheck, SiteCheck, SpeedResult } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { fmtMs, fmtSpeed, speedProviderLabel, type SpeedUnit, unitLabel } from '@/lib/utils';
@@ -16,7 +16,7 @@ interface DrawerProps {
   title: string;
   subtitle?: string;
   onClose: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 function valueText(value: DetailItem['value']) {
@@ -44,7 +44,7 @@ function DetailGrid({ items }: { items: DetailItem[] }) {
   );
 }
 
-function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
+function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="border-t border-border pt-4">
       <h3 className="mb-3 text-[11px] font-medium uppercase tracking-widest text-muted-foreground">{title}</h3>
@@ -54,12 +54,39 @@ function DetailSection({ title, children }: { title: string; children: React.Rea
 }
 
 function Drawer({ open, title, subtitle, onClose, children }: DrawerProps) {
-  if (!open) return null;
+  const [isVisible, setIsVisible] = useState(open);
+  const [isClosing, setIsClosing] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setIsVisible(true);
+      setIsClosing(false);
+      return;
+    }
+
+    if (!isVisible) return;
+
+    setIsClosing(true);
+    const timeoutId = window.setTimeout(() => {
+      setIsVisible(false);
+      setIsClosing(false);
+    }, 220);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [open, isVisible]);
+
+  if (!isVisible) return null;
 
   return (
     <div className="fixed inset-0 z-50">
-      <button className="absolute inset-0 bg-background/60" aria-label="Close details" onClick={onClose} />
-      <aside className="absolute right-0 top-0 flex h-full w-full max-w-xl flex-col border-l border-border bg-card shadow-2xl animate-in slide-in-from-right duration-200">
+      <button
+        className={`absolute inset-0 bg-background/60 transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
+        aria-label="Close details"
+        onClick={onClose}
+      />
+      <aside
+        className={`absolute right-0 top-0 flex h-dvh min-h-dvh w-full max-w-xl flex-col border-l border-border bg-card shadow-2xl duration-200 ${isClosing ? 'animate-out slide-out-to-right' : 'animate-in slide-in-from-right'}`}
+      >
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
           <div className="min-w-0">
             <h2 className="truncate text-sm font-semibold uppercase tracking-widest">{title}</h2>

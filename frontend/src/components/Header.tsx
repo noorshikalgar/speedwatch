@@ -12,7 +12,14 @@ interface HeaderProps {
   timezone?: string | null;
 }
 
-const THEME_ICONS: Record<Theme, string> = { void: '◉', terminal: '⬛', paper: '□' };
+const THEME_ICONS: Record<Theme, string> = {
+  void: '◉',
+  midnight: '☾',
+  graphite: '▦',
+  ember: '✦',
+  terminal: '⬛',
+  paper: '□',
+};
 
 function fmtCountdown(nextRun: string): string {
   const diff = Math.max(0, new Date(nextRun).getTime() - Date.now());
