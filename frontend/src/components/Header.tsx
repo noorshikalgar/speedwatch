@@ -92,9 +92,16 @@ export function Header({ isRunning, nextRun }: HeaderProps) {
         </div>
 
         {/* Theme cycle */}
-        <Button variant="ghost" size="sm" onClick={cycleTheme} className="gap-1.5 text-xs px-2.5 h-7">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={cycleTheme}
+          className="gap-1.5 text-xs px-2.5 h-7"
+          title={`Theme: ${THEME_LABELS[theme]}`}
+          aria-label={`Switch theme from ${THEME_LABELS[theme]}`}
+        >
           <Monitor className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">{THEME_ICONS[theme]} {THEME_LABELS[theme]}</span>
+          <span className="hidden sm:inline">{THEME_ICONS[theme]}</span>
         </Button>
 
         {/* Settings link */}

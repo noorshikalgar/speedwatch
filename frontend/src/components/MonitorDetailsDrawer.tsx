@@ -85,7 +85,7 @@ function Drawer({ open, title, subtitle, onClose, children }: DrawerProps) {
         onClick={onClose}
       />
       <aside
-        className={`absolute right-0 top-0 flex h-dvh min-h-dvh w-full max-w-xl flex-col border-l border-border bg-card shadow-2xl duration-200 ${isClosing ? 'animate-out slide-out-to-right' : 'animate-in slide-in-from-right'}`}
+        className={`absolute right-0 top-0 flex h-dvh min-h-dvh w-full max-w-xl flex-col border-l border-border bg-card shadow-2xl transition-transform duration-200 ease-out ${isClosing ? 'translate-x-full' : 'translate-x-0'}`}
       >
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
           <div className="min-w-0">
