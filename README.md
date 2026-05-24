@@ -67,8 +67,8 @@ Use it to answer the real questions:
 ### Run Locally
 
 ```bash
-git clone git@github.com:noorshikalgar/local-speedtest.git
-cd local-speedtest
+git clone git@github.com:noorshikalgar/speedwatch.git
+cd speedwatch
 npm run install:all
 npm run dev
 ```
@@ -120,7 +120,7 @@ Portainer will build the image and expose the app on port `3001`.
 
 1. Open **Stacks** -> **Add stack**
 2. Select **Repository**
-3. Set the repository URL to `https://github.com/noorshikalgar/local-speedtest`
+3. Set the repository URL to `https://github.com/noorshikalgar/speedwatch`
 4. Set the compose path to `docker-compose.yml`
 5. Click **Deploy the stack**
 
@@ -199,7 +199,7 @@ npm run start         # start the backend server
 ## Project Structure
 
 ```text
-local-speedtest/
+speedwatch/
 ├── assets/                 # README and brand assets
 ├── backend/                # Express API, scheduler, SQLite access
 ├── frontend/               # React dashboard

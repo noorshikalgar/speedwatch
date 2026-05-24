@@ -235,21 +235,45 @@ export function SettingsPage() {
         {/* Display */}
         <Card>
           <CardHeader><CardTitle>Display</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
-            <Label htmlFor="display-timezone">Timezone</Label>
-            <Input
-              id="display-timezone"
-              list="timezone-options"
-              value={form.display_timezone}
-              onChange={(e) => set('display_timezone', e.target.value)}
-              className="w-64"
-            />
-            <datalist id="timezone-options">
-              {TIMEZONE_OPTIONS.map((tz) => (
-                <option key={tz} value={tz} />
-              ))}
-            </datalist>
-            <p className="text-xs text-muted-foreground">Timestamps use this IANA timezone.</p>
+          <CardContent className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="display-timezone">Timezone</Label>
+              <Input
+                id="display-timezone"
+                list="timezone-options"
+                value={form.display_timezone}
+                onChange={(e) => set('display_timezone', e.target.value)}
+                className="w-full sm:w-64"
+              />
+              <datalist id="timezone-options">
+                {TIMEZONE_OPTIONS.map((tz) => (
+                  <option key={tz} value={tz} />
+                ))}
+              </datalist>
+              <p className="text-xs text-muted-foreground">Timestamps use this IANA timezone.</p>
+            </div>
+            <Separator />
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="github-star-enabled"
+                  checked={form.github_star_enabled}
+                  onCheckedChange={(checked) => set('github_star_enabled', checked)}
+                />
+                <Label htmlFor="github-star-enabled">Show GitHub star link in header</Label>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="github-repo-url">GitHub repository URL</Label>
+                <Input
+                  id="github-repo-url"
+                  placeholder="https://github.com/noorshikalgar/speedwatch"
+                  value={form.github_repo_url}
+                  onChange={(e) => set('github_repo_url', e.target.value)}
+                  disabled={!form.github_star_enabled}
+                />
+                <p className="text-xs text-muted-foreground">Use your own fork URL or turn the header link off entirely.</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

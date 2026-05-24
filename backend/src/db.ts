@@ -149,6 +149,8 @@ const DEFAULTS: Record<string, string> = {
   notify_site_slow: 'true',
   notify_speed_low: 'true',
   public_status_enabled: 'false',
+  github_star_enabled: 'true',
+  github_repo_url: 'https://github.com/noorshikalgar/speedwatch',
   latency_sites: JSON.stringify(['https://google.com', 'https://cloudflare.com', 'https://github.com']),
 };
 

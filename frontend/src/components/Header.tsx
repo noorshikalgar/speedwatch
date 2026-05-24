@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Settings, Zap, Monitor } from 'lucide-react';
+import { Github, Settings as SettingsIcon, Zap, Monitor } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import { useUnit } from '@/contexts/unit';
 import { useTheme, THEME_LIST, THEME_LABELS, type Theme } from '@/contexts/theme';
+import { settingsApi } from '@/api/client';
 
 interface HeaderProps {
   isRunning?: boolean;
@@ -37,6 +39,7 @@ export function Header({ isRunning, nextRun }: HeaderProps) {
   const onSettings = location.pathname === '/settings';
   const { unit, setUnit } = useUnit();
   const { theme, setTheme } = useTheme();
+  const { data: settings } = useQuery({ queryKey: ['settings'], queryFn: settingsApi.get });
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -52,13 +55,14 @@ export function Header({ isRunning, nextRun }: HeaderProps) {
 
   const isNextRunDue = nextRun ? new Date(nextRun).getTime() <= Date.now() : false;
   const showCountdown = !!nextRun && !isRunning && !isNextRunDue;
+  const showGithubStar = settings?.github_star_enabled && settings.github_repo_url;
 
   return (
     <header className="border-b border-border bg-card px-4 py-2.5 flex items-center justify-between">
       {/* Brand */}
       <Link to="/" className="flex items-center gap-2.5 group">
         <Zap className="h-4 w-4 text-primary transition-transform group-hover:scale-110" />
-        <span className="text-sm font-semibold tracking-widest uppercase text-foreground group-hover:text-primary transition-colors">
+        <span className="font-brand text-sm font-extrabold tracking-[0.2em] uppercase text-foreground group-hover:text-primary transition-colors">
           SpeedWatch
         </span>
       </Link>
@@ -76,6 +80,20 @@ export function Header({ isRunning, nextRun }: HeaderProps) {
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-warning animate-pulse" />
             testing…
           </span>
+        )}
+
+        {showGithubStar && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden h-7 gap-1.5 px-2.5 text-xs sm:inline-flex"
+            asChild
+          >
+            <a href={settings.github_repo_url} target="_blank" rel="noopener noreferrer" aria-label="Star SpeedWatch on GitHub">
+              <Github className="h-3.5 w-3.5" />
+              <span className="hidden lg:inline">Star</span>
+            </a>
+          </Button>
         )}
 
         {/* Unit toggle */}
@@ -110,7 +128,7 @@ export function Header({ isRunning, nextRun }: HeaderProps) {
         {/* Settings link */}
         <Button variant={onSettings ? 'secondary' : 'ghost'} size="icon" className="h-7 w-7" asChild>
           <Link to={onSettings ? '/' : '/settings'} aria-label="Settings">
-            <Settings className={cn('h-3.5 w-3.5', onSettings && 'text-primary')} />
+            <SettingsIcon className={cn('h-3.5 w-3.5', onSettings && 'text-primary')} />
           </Link>
         </Button>
       </div>

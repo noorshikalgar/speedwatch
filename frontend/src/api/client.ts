@@ -48,6 +48,8 @@ export interface Settings {
   notify_site_slow: boolean;
   notify_speed_low: boolean;
   public_status_enabled: boolean;
+  github_star_enabled: boolean;
+  github_repo_url: string;
   latency_sites: string[];
 }
 

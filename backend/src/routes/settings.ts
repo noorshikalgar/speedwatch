@@ -35,6 +35,8 @@ router.get('/', (_req, res) => {
     notify_site_slow: raw.notify_site_slow !== 'false',
     notify_speed_low: raw.notify_speed_low !== 'false',
     public_status_enabled: raw.public_status_enabled === 'true',
+    github_star_enabled: raw.github_star_enabled !== 'false',
+    github_repo_url: raw.github_repo_url ?? 'https://github.com/noorshikalgar/speedwatch',
     latency_sites: JSON.parse(raw.latency_sites ?? '[]'),
   });
 });
@@ -72,12 +74,16 @@ router.put('/', (req, res) => {
     setSetting('librespeed_server_url', String(body.librespeed_server_url ?? '').trim());
   }
 
-  for (const key of ['notifications_enabled', 'notify_site_down', 'notify_site_slow', 'notify_speed_low', 'public_status_enabled']) {
+  for (const key of ['notifications_enabled', 'notify_site_down', 'notify_site_slow', 'notify_speed_low', 'public_status_enabled', 'github_star_enabled']) {
     if (body[key] !== undefined) setSetting(key, body[key] ? 'true' : 'false');
   }
 
   if (body.notification_webhook_url !== undefined) {
     setSetting('notification_webhook_url', String(body.notification_webhook_url ?? '').trim());
+  }
+
+  if (body.github_repo_url !== undefined) {
+    setSetting('github_repo_url', String(body.github_repo_url ?? '').trim());
   }
 
   if (intervalChanged) restartScheduler();

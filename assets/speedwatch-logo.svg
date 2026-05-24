@@ -1,9 +1,13 @@
 <svg width="520" height="120" viewBox="0 0 520 120" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">SpeedWatch logo</title>
-  <desc id="desc">Animated SpeedWatch logo with a cyan lightning mark and uppercase wordmark.</desc>
+  <desc id="desc">Animated SpeedWatch logo with horizontal light-speed trails behind a cyan lightning mark and uppercase wordmark.</desc>
   <style>
     .bg {
       fill: #090b10;
+    }
+
+    .vignette {
+      fill: url(#vignette);
     }
 
     .rule {
@@ -11,14 +15,71 @@
       stroke-width: 1;
     }
 
+    .speed-line {
+      stroke-linecap: round;
+      opacity: 0;
+      filter: url(#lineGlow);
+      animation: speedLine 2.8s cubic-bezier(0.16, 0.68, 0.18, 1) infinite;
+    }
+
+    .speed-cyan {
+      stroke: url(#horizontalCyan);
+      stroke-width: 1.5;
+    }
+
+    .speed-blue {
+      stroke: url(#horizontalBlue);
+      stroke-width: 1.1;
+    }
+
+    .speed-dim {
+      stroke: url(#horizontalDim);
+      stroke-width: 1;
+    }
+
+    .s1 { animation-delay: 0s; }
+    .s2 { animation-delay: 0.12s; }
+    .s3 { animation-delay: 0.24s; }
+    .s4 { animation-delay: 0.36s; }
+    .s5 { animation-delay: 0.48s; }
+    .s6 { animation-delay: 0.6s; }
+    .s7 { animation-delay: 0.72s; }
+    .s8 { animation-delay: 0.84s; }
+    .s9 { animation-delay: 0.96s; }
+    .s10 { animation-delay: 1.08s; }
+    .s11 { animation-delay: 1.2s; }
+    .s12 { animation-delay: 1.32s; }
+    .s13 { animation-delay: 1.44s; }
+    .s14 { animation-delay: 1.56s; }
+
+    .wake {
+      fill: url(#wake);
+      opacity: 0.26;
+      animation: wake 2.8s ease-in-out infinite;
+    }
+
+    .logo {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: logoReveal 2.8s ease-in-out infinite;
+    }
+
+    .logo-shadow {
+      fill: #03050a;
+      opacity: 0.7;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: logoShadow 2.8s ease-in-out infinite;
+    }
+
     .bolt-glow {
       stroke: #0ea5e9;
       stroke-width: 8;
       stroke-linecap: round;
       stroke-linejoin: round;
-      opacity: 0.16;
+      opacity: 0.18;
       filter: url(#glow);
-      animation: pulse 2.2s ease-in-out infinite;
+      animation: pulse 2.8s ease-in-out infinite;
     }
 
     .bolt {
@@ -26,7 +87,7 @@
       stroke-width: 3.5;
       stroke-linecap: round;
       stroke-linejoin: round;
-      animation: bolt 2.2s ease-in-out infinite;
+      animation: bolt 2.8s ease-in-out infinite;
     }
 
     .wordmark {
@@ -40,12 +101,67 @@
     .scan {
       fill: url(#scanGradient);
       mix-blend-mode: screen;
-      animation: scan 3.4s ease-in-out infinite;
+      animation: scan 2.8s ease-in-out infinite;
+    }
+
+    .core-flash {
+      fill: url(#coreFlash);
+      opacity: 0;
+      animation: coreFlash 2.8s ease-in-out infinite;
+    }
+
+    @keyframes speedLine {
+      0% {
+        opacity: 0;
+        stroke-dasharray: 2 170;
+        stroke-dashoffset: 170;
+      }
+      12% {
+        opacity: 0.64;
+      }
+      48% {
+        opacity: 0.18;
+        stroke-dasharray: 150 28;
+        stroke-dashoffset: -170;
+      }
+      49%, 100% {
+        opacity: 0;
+        stroke-dasharray: 2 170;
+        stroke-dashoffset: -220;
+      }
+    }
+
+    @keyframes logoReveal {
+      0%, 14% {
+        opacity: 0.72;
+        transform: translateY(1px) scale(0.985);
+        filter: drop-shadow(0 0 0 rgba(14, 165, 233, 0));
+      }
+      30%, 76% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: drop-shadow(0 0 11px rgba(14, 165, 233, 0.24));
+      }
+      100% {
+        opacity: 0.78;
+        transform: translateY(1px) scale(0.988);
+        filter: drop-shadow(0 0 0 rgba(14, 165, 233, 0));
+      }
+    }
+
+    @keyframes logoShadow {
+      0%, 15%, 100% { opacity: 0.38; transform: translateX(-9px); }
+      30%, 76% { opacity: 0.72; transform: translateX(0); }
+    }
+
+    @keyframes wake {
+      0%, 100% { opacity: 0.14; transform: translateX(-10px); }
+      24%, 62% { opacity: 0.34; transform: translateX(0); }
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 0.12; }
-      50% { opacity: 0.36; }
+      0%, 100% { opacity: 0.1; }
+      28%, 62% { opacity: 0.42; }
     }
 
     @keyframes bolt {
@@ -53,28 +169,75 @@
         stroke: #0ea5e9;
         filter: drop-shadow(0 0 0 rgba(14, 165, 233, 0));
       }
-      50% {
+      30%, 62% {
         stroke: #38bdf8;
-        filter: drop-shadow(0 0 7px rgba(56, 189, 248, 0.75));
+        filter: drop-shadow(0 0 9px rgba(56, 189, 248, 0.85));
       }
     }
 
     @keyframes scan {
-      0%, 28% { transform: translateX(-170px); opacity: 0; }
-      42%, 64% { opacity: 0.42; }
-      82%, 100% { transform: translateX(420px); opacity: 0; }
+      0%, 24% { transform: translateX(-170px); opacity: 0; }
+      34%, 52% { opacity: 0.48; }
+      72%, 100% { transform: translateX(420px); opacity: 0; }
+    }
+
+    @keyframes coreFlash {
+      0%, 18%, 72%, 100% { opacity: 0; transform: scale(0.32); }
+      27% { opacity: 0.7; transform: scale(1); }
+      44% { opacity: 0.08; transform: scale(1.45); }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .bolt-glow, .bolt, .scan {
+      .speed-line, .wake, .logo, .logo-shadow, .bolt-glow, .bolt, .scan, .core-flash {
         animation: none;
       }
     }
   </style>
 
   <defs>
+    <radialGradient id="vignette" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(260 58) rotate(90) scale(96 310)">
+      <stop stop-color="#101827"/>
+      <stop offset="0.5" stop-color="#090b10"/>
+      <stop offset="1" stop-color="#05060a"/>
+    </radialGradient>
+    <linearGradient id="horizontalCyan" x1="0" y1="0" x2="520" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38bdf8" stop-opacity="0"/>
+      <stop offset="0.14" stop-color="#38bdf8" stop-opacity="0.72"/>
+      <stop offset="0.58" stop-color="#0ea5e9" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="horizontalBlue" x1="0" y1="0" x2="520" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7dd3fc" stop-opacity="0"/>
+      <stop offset="0.16" stop-color="#93c5fd" stop-opacity="0.48"/>
+      <stop offset="0.62" stop-color="#60a5fa" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="horizontalDim" x1="0" y1="0" x2="520" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#94a3b8" stop-opacity="0"/>
+      <stop offset="0.18" stop-color="#94a3b8" stop-opacity="0.24"/>
+      <stop offset="0.64" stop-color="#94a3b8" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="wake" x1="42" y1="0" x2="440" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0ea5e9" stop-opacity="0.26"/>
+      <stop offset="0.22" stop-color="#0ea5e9" stop-opacity="0.14"/>
+      <stop offset="0.58" stop-color="#38bdf8" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#38bdf8" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="coreFlash" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(260 60) rotate(90) scale(42 126)">
+      <stop stop-color="#ffffff" stop-opacity="0.75"/>
+      <stop offset="0.32" stop-color="#38bdf8" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#0ea5e9" stop-opacity="0"/>
+    </radialGradient>
     <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
       <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="lineGlow" x="-10%" y="-400%" width="120%" height="900%">
+      <feGaussianBlur stdDeviation="1.6" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
@@ -88,14 +251,44 @@
     <clipPath id="wordClip">
       <text x="114" y="71" class="wordmark">SPEEDWATCH</text>
     </clipPath>
+    <clipPath id="stageClip">
+      <rect width="520" height="120"/>
+    </clipPath>
   </defs>
 
   <rect class="bg" width="520" height="120" rx="0"/>
+  <rect class="vignette" width="520" height="120" rx="0"/>
   <path class="rule" d="M0 102.5H520"/>
 
-  <path class="bolt-glow" d="M63 29L43 62H63L54 91L79 53H58L63 29Z"/>
-  <path class="bolt" d="M63 29L43 62H63L54 91L79 53H58L63 29Z"/>
+  <g clip-path="url(#stageClip)">
+    <rect class="wake" x="41" y="28" width="420" height="64"/>
+    <path class="speed-line speed-dim s1" d="M0 24H520"/>
+    <path class="speed-line speed-blue s2" d="M0 34H520"/>
+    <path class="speed-line speed-cyan s3" d="M0 43H520"/>
+    <path class="speed-line speed-dim s4" d="M0 51H520"/>
+    <path class="speed-line speed-blue s5" d="M0 59H520"/>
+    <path class="speed-line speed-cyan s6" d="M0 67H520"/>
+    <path class="speed-line speed-dim s7" d="M0 76H520"/>
+    <path class="speed-line speed-blue s8" d="M0 86H520"/>
+    <path class="speed-line speed-cyan s9" d="M0 31H520"/>
+    <path class="speed-line speed-dim s10" d="M0 39H520"/>
+    <path class="speed-line speed-blue s11" d="M0 72H520"/>
+    <path class="speed-line speed-dim s12" d="M0 82H520"/>
+    <path class="speed-line speed-cyan s13" d="M0 55H520"/>
+    <path class="speed-line speed-blue s14" d="M0 63H520"/>
+  </g>
 
-  <text x="114" y="71" class="wordmark">SPEEDWATCH</text>
-  <rect class="scan" x="0" y="43" width="58" height="34" clip-path="url(#wordClip)"/>
+  <circle class="core-flash" cx="260" cy="60" r="64"/>
+
+  <g class="logo-shadow">
+    <path d="M63 29L43 62H63L54 91L79 53H58L63 29Z"/>
+    <text x="114" y="71" class="wordmark">SPEEDWATCH</text>
+  </g>
+
+  <g class="logo">
+    <path class="bolt-glow" d="M63 29L43 62H63L54 91L79 53H58L63 29Z"/>
+    <path class="bolt" d="M63 29L43 62H63L54 91L79 53H58L63 29Z"/>
+    <text x="114" y="71" class="wordmark">SPEEDWATCH</text>
+    <rect class="scan" x="0" y="43" width="58" height="34" clip-path="url(#wordClip)"/>
+  </g>
 </svg>

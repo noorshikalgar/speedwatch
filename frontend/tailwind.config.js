@@ -6,6 +6,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
+        brand: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', 'monospace'],
       },
       colors: {
