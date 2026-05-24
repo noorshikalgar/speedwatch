@@ -87,7 +87,7 @@ export function SpeedTable({ settings, refreshKey = 0 }: SpeedTableProps) {
                     onClick={() => setSelected(row)}
                     className={cn(
                       'cursor-pointer border-b border-border/50 hover:bg-muted/30 transition-colors animate-in fade-in-0 slide-in-from-bottom-1',
-                      { 'bg-red-950/20': isLow, 'bg-amber-950/10': isWarn }
+                      { 'bg-destructive/10': isLow, 'bg-warning/10': isWarn }
                     )}
                     style={{ animationDelay: `${i * 25}ms`, animationDuration: '200ms' }}
                   >
@@ -95,12 +95,12 @@ export function SpeedTable({ settings, refreshKey = 0 }: SpeedTableProps) {
                     {formatActivityTime(row.timestamp, timezone)}
                     {row.is_manual === 1 && <span className="ml-1 text-primary/60 text-[10px]">manual</span>}
                   </td>
-                  <td className={cn(colClass, 'text-right font-medium', isLow ? 'text-red-400' : isWarn ? 'text-amber-400' : 'text-cyan-400')}>
+                  <td className={cn(colClass, 'text-right font-medium', isLow ? 'text-destructive' : isWarn ? 'text-warning' : 'text-metric-download')}>
                     {fmtSpeed(row.download_mbps, unit)}
                   </td>
-                  <td className={cn(colClass, 'text-right text-emerald-400 hidden sm:table-cell')}>{fmtSpeed(row.upload_mbps, unit)}</td>
-                  <td className={cn(colClass, 'text-right text-orange-400 hidden sm:table-cell')}>{fmtMs(row.ping_ms)}</td>
-                  <td className={cn(colClass, 'text-right text-violet-400 hidden md:table-cell')}>{fmtMs(row.jitter_ms)}</td>
+                  <td className={cn(colClass, 'text-right text-metric-upload hidden sm:table-cell')}>{fmtSpeed(row.upload_mbps, unit)}</td>
+                  <td className={cn(colClass, 'text-right text-metric-latency hidden sm:table-cell')}>{fmtMs(row.ping_ms)}</td>
+                  <td className={cn(colClass, 'text-right text-metric-jitter hidden md:table-cell')}>{fmtMs(row.jitter_ms)}</td>
                   <td className={colClass}>
                     {row.error ? <Badge variant="destructive">error</Badge>
                       : isGood ? <Badge variant="success">good</Badge>

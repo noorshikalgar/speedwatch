@@ -76,7 +76,7 @@ export function LatencyTable({ data, isLoading, timezone }: LatencyTableProps) {
                   >
                     <td className={cn(col, 'text-muted-foreground')}>{formatActivityTime(row.timestamp, timezone, true)}</td>
                     <td className={cn(col, 'text-foreground font-medium')}>{hostname(row.url)}</td>
-                    <td className={cn(col, 'text-right hidden sm:table-cell', isOk ? 'text-orange-400' : 'text-muted-foreground')}>
+                    <td className={cn(col, 'text-right hidden sm:table-cell', isOk ? 'text-metric-latency' : 'text-muted-foreground')}>
                       {row.latency_ms != null ? row.latency_ms.toFixed(0) : '—'}
                     </td>
                     <td className={col}>

@@ -13,9 +13,9 @@ interface StatCardsProps {
 function StatusDot({ status }: { status: 'good' | 'warn' | 'low' }) {
   return (
     <span className={cn('inline-block h-2 w-2 rounded-full', {
-      'bg-emerald-400': status === 'good',
-      'bg-amber-400': status === 'warn',
-      'bg-red-500': status === 'low',
+      'bg-warning': status === 'warn',
+      'bg-destructive': status === 'low',
+      'bg-success': status === 'good',
     })} />
   );
 }
@@ -36,7 +36,7 @@ export function StatCards({ latest, settings }: StatCardsProps) {
       value: fmtSpeed(latest?.download_mbps ?? null, unit),
       unit: ul,
       icon: ArrowDown,
-      color: 'text-cyan-400',
+      color: 'text-metric-download',
       status: dlStatus,
       planMbps: planDl,
     },
@@ -45,7 +45,7 @@ export function StatCards({ latest, settings }: StatCardsProps) {
       value: fmtSpeed(latest?.upload_mbps ?? null, unit),
       unit: ul,
       icon: ArrowUp,
-      color: 'text-emerald-400',
+      color: 'text-metric-upload',
       status: ulStatus,
       planMbps: planUl,
     },
@@ -54,7 +54,7 @@ export function StatCards({ latest, settings }: StatCardsProps) {
       value: fmtMs(latest?.ping_ms ?? null),
       unit: 'ms',
       icon: Clock,
-      color: 'text-orange-400',
+      color: 'text-metric-latency',
       status: null,
       planMbps: null,
     },
@@ -63,7 +63,7 @@ export function StatCards({ latest, settings }: StatCardsProps) {
       value: fmtMs(latest?.jitter_ms ?? null),
       unit: 'ms',
       icon: Waves,
-      color: 'text-violet-400',
+      color: 'text-metric-jitter',
       status: null,
       planMbps: null,
     },

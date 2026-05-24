@@ -13,7 +13,16 @@ interface LatencyChartProps {
   timezone?: string | null;
 }
 
-const PALETTE = ['#f59e0b', '#6366f1', '#ec4899', '#14b8a6', '#f97316', '#84cc16', '#a855f7', '#3b82f6'];
+const PALETTE = [
+  'hsl(var(--metric-latency))',
+  'hsl(var(--primary))',
+  'hsl(var(--info))',
+  'hsl(var(--success))',
+  'hsl(var(--warning))',
+  'hsl(var(--metric-jitter))',
+  'hsl(var(--metric-download))',
+  'hsl(var(--metric-upload))',
+];
 
 function hostname(url: string) {
   try { return new URL(url).hostname; } catch { return url; }

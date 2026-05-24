@@ -17,6 +17,7 @@ const THEME_ICONS: Record<Theme, string> = {
   midnight: '☾',
   graphite: '▦',
   ember: '✦',
+  japan: '◒',
   terminal: '⬛',
   paper: '□',
 };
@@ -24,8 +25,10 @@ const THEME_ICONS: Record<Theme, string> = {
 function fmtCountdown(nextRun: string): string {
   const diff = Math.max(0, new Date(nextRun).getTime() - Date.now());
   const secs = Math.floor(diff / 1000);
-  const m = Math.floor(secs / 60);
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
   const s = secs % 60;
+  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
@@ -63,14 +66,14 @@ export function Header({ isRunning, nextRun }: HeaderProps) {
       <div className="flex items-center gap-1.5">
         {/* right side: countdown + testing indicator */}
         {showCountdown && (
-          <span className="hidden md:inline-flex items-center gap-1.5 border border-emerald-800/40 bg-emerald-950/30 px-2 py-1 text-[11px] uppercase tracking-wider tabular-nums mr-1">
-            <span className="text-emerald-600">next in</span>
-            <span className="text-emerald-300">{fmtCountdown(nextRun)}</span>
+          <span className="hidden md:inline-flex items-center gap-1.5 border border-success/35 bg-success/10 px-2 py-1 text-[11px] uppercase tracking-wider tabular-nums mr-1">
+            <span className="text-success/75">next in</span>
+            <span className="text-success">{fmtCountdown(nextRun)}</span>
           </span>
         )}
         {isRunning && (
-          <span className="hidden md:inline-flex items-center gap-1.5 border border-amber-800/40 bg-amber-950/30 px-2 py-1 text-[11px] uppercase tracking-wider text-amber-400 mr-1">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+          <span className="hidden md:inline-flex items-center gap-1.5 border border-warning/35 bg-warning/10 px-2 py-1 text-[11px] uppercase tracking-wider text-warning mr-1">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-warning animate-pulse" />
             testing…
           </span>
         )}

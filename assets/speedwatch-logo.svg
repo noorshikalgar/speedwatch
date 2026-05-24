@@ -1,0 +1,101 @@
+<svg width="520" height="120" viewBox="0 0 520 120" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">SpeedWatch logo</title>
+  <desc id="desc">Animated SpeedWatch logo with a cyan lightning mark and uppercase wordmark.</desc>
+  <style>
+    .bg {
+      fill: #090b10;
+    }
+
+    .rule {
+      stroke: #1f232b;
+      stroke-width: 1;
+    }
+
+    .bolt-glow {
+      stroke: #0ea5e9;
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.16;
+      filter: url(#glow);
+      animation: pulse 2.2s ease-in-out infinite;
+    }
+
+    .bolt {
+      stroke: #0ea5e9;
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      animation: bolt 2.2s ease-in-out infinite;
+    }
+
+    .wordmark {
+      fill: #f4f7fb;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: 5px;
+    }
+
+    .scan {
+      fill: url(#scanGradient);
+      mix-blend-mode: screen;
+      animation: scan 3.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.12; }
+      50% { opacity: 0.36; }
+    }
+
+    @keyframes bolt {
+      0%, 100% {
+        stroke: #0ea5e9;
+        filter: drop-shadow(0 0 0 rgba(14, 165, 233, 0));
+      }
+      50% {
+        stroke: #38bdf8;
+        filter: drop-shadow(0 0 7px rgba(56, 189, 248, 0.75));
+      }
+    }
+
+    @keyframes scan {
+      0%, 28% { transform: translateX(-170px); opacity: 0; }
+      42%, 64% { opacity: 0.42; }
+      82%, 100% { transform: translateX(420px); opacity: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .bolt-glow, .bolt, .scan {
+        animation: none;
+      }
+    }
+  </style>
+
+  <defs>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="scanGradient" x1="0" y1="0" x2="56" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="wordClip">
+      <text x="114" y="71" class="wordmark">SPEEDWATCH</text>
+    </clipPath>
+  </defs>
+
+  <rect class="bg" width="520" height="120" rx="0"/>
+  <path class="rule" d="M0 102.5H520"/>
+
+  <path class="bolt-glow" d="M63 29L43 62H63L54 91L79 53H58L63 29Z"/>
+  <path class="bolt" d="M63 29L43 62H63L54 91L79 53H58L63 29Z"/>
+
+  <text x="114" y="71" class="wordmark">SPEEDWATCH</text>
+  <rect class="scan" x="0" y="43" width="58" height="34" clip-path="url(#wordClip)"/>
+</svg>

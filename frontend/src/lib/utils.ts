@@ -9,6 +9,7 @@ export function cn(...inputs: ClassValue[]) {
 export function speedProviderLabel(provider?: SpeedTestProvider | string | null): string {
   if (provider === 'google') return 'Google';
   if (provider === 'ookla') return 'Ookla';
+  if (provider === 'librespeed') return 'LibreSpeed';
   return 'Cloudflare';
 }
 

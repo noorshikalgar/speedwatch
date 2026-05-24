@@ -28,6 +28,13 @@ router.get('/', (_req, res) => {
     display_timezone: normalizeTimezone(raw.display_timezone ?? DEFAULT_TIMEZONE),
     speed_test_provider: normalizeSpeedTestProvider(raw.speed_test_provider ?? 'cloudflare'),
     speed_test_auto_round_robin: raw.speed_test_auto_round_robin === 'true',
+    librespeed_server_url: raw.librespeed_server_url ?? '',
+    notifications_enabled: raw.notifications_enabled === 'true',
+    notification_webhook_url: raw.notification_webhook_url ?? '',
+    notify_site_down: raw.notify_site_down !== 'false',
+    notify_site_slow: raw.notify_site_slow !== 'false',
+    notify_speed_low: raw.notify_speed_low !== 'false',
+    public_status_enabled: raw.public_status_enabled === 'true',
     latency_sites: JSON.parse(raw.latency_sites ?? '[]'),
   });
 });
@@ -59,6 +66,18 @@ router.put('/', (req, res) => {
 
   if (body.speed_test_auto_round_robin !== undefined) {
     setSetting('speed_test_auto_round_robin', body.speed_test_auto_round_robin ? 'true' : 'false');
+  }
+
+  if (body.librespeed_server_url !== undefined) {
+    setSetting('librespeed_server_url', String(body.librespeed_server_url ?? '').trim());
+  }
+
+  for (const key of ['notifications_enabled', 'notify_site_down', 'notify_site_slow', 'notify_speed_low', 'public_status_enabled']) {
+    if (body[key] !== undefined) setSetting(key, body[key] ? 'true' : 'false');
+  }
+
+  if (body.notification_webhook_url !== undefined) {
+    setSetting('notification_webhook_url', String(body.notification_webhook_url ?? '').trim());
   }
 
   if (intervalChanged) restartScheduler();

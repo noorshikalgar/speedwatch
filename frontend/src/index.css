@@ -22,6 +22,16 @@
   --accent-foreground: 0 0% 95%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
+  --success: 158 64% 52%;
+  --success-foreground: 240 10% 3.9%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 240 10% 3.9%;
+  --info: 199 89% 48%;
+  --info-foreground: 240 10% 3.9%;
+  --metric-download: 199 89% 56%;
+  --metric-upload: 158 64% 52%;
+  --metric-latency: 28 92% 56%;
+  --metric-jitter: 262 83% 68%;
   --radius: 0.25rem;
 }
 
@@ -44,6 +54,16 @@
   --accent-foreground: 120 70% 82%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
+  --success: 120 100% 47%;
+  --success-foreground: 0 0% 4%;
+  --warning: 52 95% 54%;
+  --warning-foreground: 0 0% 4%;
+  --info: 120 70% 82%;
+  --info-foreground: 0 0% 4%;
+  --metric-download: 120 100% 47%;
+  --metric-upload: 150 80% 48%;
+  --metric-latency: 52 95% 54%;
+  --metric-jitter: 100 55% 64%;
   --radius: 0rem;
 }
 
@@ -66,6 +86,16 @@
   --accent-foreground: 222 47% 11%;
   --destructive: 0 84% 55%;
   --destructive-foreground: 0 0% 98%;
+  --success: 151 55% 38%;
+  --success-foreground: 0 0% 100%;
+  --warning: 34 85% 46%;
+  --warning-foreground: 0 0% 100%;
+  --info: 199 89% 42%;
+  --info-foreground: 0 0% 100%;
+  --metric-download: 199 89% 38%;
+  --metric-upload: 151 55% 36%;
+  --metric-latency: 27 80% 45%;
+  --metric-jitter: 262 45% 50%;
   --radius: 0.375rem;
 }
 
@@ -88,6 +118,16 @@
   --accent-foreground: 210 40% 96%;
   --destructive: 0 72% 56%;
   --destructive-foreground: 0 0% 98%;
+  --success: 158 64% 52%;
+  --success-foreground: 224 45% 7%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 224 45% 7%;
+  --info: 215 100% 66%;
+  --info-foreground: 224 45% 7%;
+  --metric-download: 215 100% 66%;
+  --metric-upload: 158 64% 52%;
+  --metric-latency: 38 92% 58%;
+  --metric-jitter: 255 85% 76%;
   --radius: 0.5rem;
 }
 
@@ -110,6 +150,16 @@
   --accent-foreground: 210 20% 94%;
   --destructive: 4 78% 58%;
   --destructive-foreground: 0 0% 98%;
+  --success: 153 48% 50%;
+  --success-foreground: 220 9% 10%;
+  --warning: 39 84% 56%;
+  --warning-foreground: 220 9% 10%;
+  --info: 191 92% 55%;
+  --info-foreground: 220 9% 10%;
+  --metric-download: 191 92% 55%;
+  --metric-upload: 153 48% 50%;
+  --metric-latency: 31 84% 58%;
+  --metric-jitter: 255 38% 68%;
   --radius: 0.625rem;
 }
 
@@ -132,6 +182,48 @@
   --accent-foreground: 28 60% 94%;
   --destructive: 0 75% 58%;
   --destructive-foreground: 0 0% 98%;
+  --success: 146 42% 47%;
+  --success-foreground: 18 20% 7%;
+  --warning: 23 95% 58%;
+  --warning-foreground: 18 20% 7%;
+  --info: 32 90% 64%;
+  --info-foreground: 18 20% 7%;
+  --metric-download: 32 90% 64%;
+  --metric-upload: 146 42% 47%;
+  --metric-latency: 23 95% 58%;
+  --metric-jitter: 8 76% 66%;
+  --radius: 0.375rem;
+}
+
+/* ─── Theme: Japan (dark gray — vermilion) ───────────────── */
+.theme-japan {
+  --background: 210 8% 7%;
+  --foreground: 35 24% 92%;
+  --card: 210 7% 10%;
+  --card-foreground: 35 24% 92%;
+  --border: 210 7% 20%;
+  --input: 210 7% 16%;
+  --ring: 20 88% 54%;
+  --primary: 20 88% 54%;
+  --primary-foreground: 210 8% 7%;
+  --secondary: 210 6% 15%;
+  --secondary-foreground: 35 24% 92%;
+  --muted: 210 6% 13%;
+  --muted-foreground: 34 10% 58%;
+  --accent: 20 54% 18%;
+  --accent-foreground: 32 38% 92%;
+  --destructive: 3 68% 56%;
+  --destructive-foreground: 35 24% 96%;
+  --success: 92 28% 48%;
+  --success-foreground: 210 8% 7%;
+  --warning: 31 92% 55%;
+  --warning-foreground: 210 8% 7%;
+  --info: 28 68% 62%;
+  --info-foreground: 210 8% 7%;
+  --metric-download: 24 88% 58%;
+  --metric-upload: 92 28% 52%;
+  --metric-latency: 36 84% 60%;
+  --metric-jitter: 12 54% 66%;
   --radius: 0.375rem;
 }
 

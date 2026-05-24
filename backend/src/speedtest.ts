@@ -19,7 +19,7 @@ export interface SpeedResult {
   error?: string;
 }
 
-export type SpeedTestProvider = 'cloudflare' | 'google' | 'ookla';
+export type SpeedTestProvider = 'cloudflare' | 'google' | 'ookla' | 'librespeed';
 
 export const SPEED_TEST_PROVIDERS: Record<SpeedTestProvider, { label: string; serverName: string; serverLocation: string; resultUrl: string }> = {
   cloudflare: {
@@ -40,6 +40,12 @@ export const SPEED_TEST_PROVIDERS: Record<SpeedTestProvider, { label: string; se
     serverLocation: 'Auto-selected',
     resultUrl: 'https://www.speedtest.net',
   },
+  librespeed: {
+    label: 'LibreSpeed',
+    serverName: 'LibreSpeed',
+    serverLocation: 'Configured server',
+    resultUrl: 'https://librespeed.org',
+  },
 };
 
 const PROVIDERS = Object.keys(SPEED_TEST_PROVIDERS) as SpeedTestProvider[];
@@ -51,6 +57,17 @@ const RETRY_ATTEMPTS = 2;
 const RETRY_DELAY_MS = 5_000;
 const execFileAsync = promisify(execFile);
 type ExecError = NodeJS.ErrnoException & { stdout?: string; stderr?: string };
+
+function normalizeBaseUrl(value: unknown): string {
+  const raw = String(value ?? '').trim().replace(/\/+$/, '');
+  if (!raw) return '';
+  try {
+    const parsed = new URL(raw);
+    return parsed.toString().replace(/\/+$/, '');
+  } catch {
+    return '';
+  }
+}
 
 export function normalizeSpeedTestProvider(value: unknown): SpeedTestProvider {
   const provider = String(value ?? '').trim().toLowerCase();
@@ -106,6 +123,26 @@ async function measureUpload(url: string): Promise<number> {
 
   for (const size of sizes) {
     const body = new Uint8Array(size); // zeros are fine for throughput testing
+    const start = performance.now();
+    await fetch(url, {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': 'application/octet-stream' },
+    });
+    totalMs += performance.now() - start;
+    totalBytes += size;
+  }
+
+  return (totalBytes * 8) / (totalMs / 1000) / 1_000_000;
+}
+
+async function measureLibreSpeedUpload(url: string): Promise<number> {
+  const sizes = [2_000_000, 8_000_000, 8_000_000];
+  let totalBytes = 0;
+  let totalMs = 0;
+
+  for (const size of sizes) {
+    const body = new Uint8Array(size);
     const start = performance.now();
     await fetch(url, {
       method: 'POST',
@@ -278,6 +315,113 @@ async function runHttpSpeedTest(provider: Extract<SpeedTestProvider, 'cloudflare
   }
 }
 
+async function probeLibreSpeed(baseUrl: string) {
+  const candidates = [
+    {
+      prefix: `${baseUrl}/backend`,
+      ping: `${baseUrl}/backend/empty.php`,
+      download: `${baseUrl}/backend/garbage.php?ckSize={bytes}`,
+      upload: `${baseUrl}/backend/empty.php`,
+      ip: `${baseUrl}/backend/getIP.php`,
+    },
+    {
+      prefix: baseUrl,
+      ping: `${baseUrl}/empty.php`,
+      download: `${baseUrl}/garbage.php?ckSize={bytes}`,
+      upload: `${baseUrl}/empty.php`,
+      ip: `${baseUrl}/getIP.php`,
+    },
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      const res = await fetch(candidate.ping, { cache: 'no-store' });
+      if (res.ok) return candidate;
+    } catch {
+      // Try the next common LibreSpeed backend layout.
+    }
+  }
+
+  return candidates[0];
+}
+
+async function runLibreSpeedTest(serverUrlValue?: unknown): Promise<SpeedResult> {
+  const meta = SPEED_TEST_PROVIDERS.librespeed;
+  const baseUrl = normalizeBaseUrl(serverUrlValue);
+
+  if (!baseUrl) {
+    return {
+      download_mbps: null,
+      upload_mbps: null,
+      ping_ms: null,
+      jitter_ms: null,
+      test_provider: 'librespeed',
+      server_name: meta.serverName,
+      server_location: meta.serverLocation,
+      server_id: '',
+      server_host: '',
+      isp_name: '',
+      client_ip: '',
+      result_url: meta.resultUrl,
+      diagnostics: 'Set a LibreSpeed server URL in Settings. Example: https://speed.example.com',
+      error: 'LibreSpeed server URL is not configured',
+    };
+  }
+
+  try {
+    const endpoints = await probeLibreSpeed(baseUrl);
+    const [pingResult, ipResult] = await Promise.all([
+      withTimeout(measurePing(endpoints.ping), TIMEOUT_MS),
+      withTimeout(fetch(endpoints.ip, { cache: 'no-store' }).then(async res => res.ok ? res.text() : ''), TIMEOUT_MS).catch(() => ''),
+    ]);
+    const { ping, jitter } = pingResult;
+    const [download_mbps, upload_mbps] = await Promise.all([
+      withTimeout(measureDownload(endpoints.download), TIMEOUT_MS * 3),
+      withTimeout(measureLibreSpeedUpload(endpoints.upload), TIMEOUT_MS * 2),
+    ]);
+    const parsed = new URL(baseUrl);
+
+    return {
+      download_mbps: round2(download_mbps),
+      upload_mbps: round2(upload_mbps),
+      ping_ms: ping,
+      jitter_ms: jitter,
+      test_provider: 'librespeed',
+      server_name: `LibreSpeed / ${parsed.hostname}`,
+      server_location: meta.serverLocation,
+      server_id: '',
+      server_host: parsed.hostname,
+      isp_name: '',
+      client_ip: ipResult.trim().slice(0, 120),
+      result_url: baseUrl,
+      diagnostics: `Using LibreSpeed backend at ${endpoints.prefix}`,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const parsed = new URL(baseUrl);
+    return {
+      download_mbps: null,
+      upload_mbps: null,
+      ping_ms: null,
+      jitter_ms: null,
+      test_provider: 'librespeed',
+      server_name: `LibreSpeed / ${parsed.hostname}`,
+      server_location: meta.serverLocation,
+      server_id: '',
+      server_host: parsed.hostname,
+      isp_name: '',
+      client_ip: '',
+      result_url: baseUrl,
+      diagnostics: [
+        await fetchDiagnostic(`${baseUrl}/backend/empty.php`),
+        await fetchDiagnostic(`${baseUrl}/empty.php`),
+        'LibreSpeed usually exposes empty.php, garbage.php, and getIP.php either at /backend or the server root.',
+      ].join('\n'),
+      error: msg,
+    };
+  }
+}
+
 async function runOoklaSpeedTest(): Promise<SpeedResult> {
   const meta = SPEED_TEST_PROVIDERS.ookla;
   try {
@@ -310,11 +454,21 @@ async function runOoklaSpeedTest(): Promise<SpeedResult> {
   } catch (err) {
     const msg = ooklaErrorMessage(err);
     const diagnostics = await ooklaDiagnostics();
+    const fallback = await runHttpSpeedTest('cloudflare');
+
+    if (!fallback.error) {
+      return {
+        ...fallback,
+        diagnostics: [
+          'Ookla Speedtest failed, so SpeedWatch automatically used Cloudflare for this run.',
+          `Ookla error: ${msg}`,
+          diagnostics,
+        ].join('\n'),
+      };
+    }
+
     return {
-      download_mbps: null,
-      upload_mbps: null,
-      ping_ms: null,
-      jitter_ms: null,
+      ...fallback,
       test_provider: 'ookla',
       server_name: meta.serverName,
       server_location: meta.serverLocation,
@@ -323,18 +477,25 @@ async function runOoklaSpeedTest(): Promise<SpeedResult> {
       isp_name: '',
       client_ip: '',
       result_url: meta.resultUrl,
-      diagnostics,
+      diagnostics: [
+        diagnostics,
+        `Cloudflare fallback also failed: ${fallback.error}`,
+      ].join('\n'),
       error: msg,
     };
   }
 }
 
-export async function runSpeedTest(providerValue: unknown = 'cloudflare'): Promise<SpeedResult> {
+export async function runSpeedTest(providerValue: unknown = 'cloudflare', options: { librespeedServerUrl?: string } = {}): Promise<SpeedResult> {
   const provider = normalizeSpeedTestProvider(providerValue);
   let lastResult: SpeedResult | null = null;
 
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS + 1; attempt++) {
-    const result = provider === 'ookla' ? await runOoklaSpeedTest() : await runHttpSpeedTest(provider);
+    const result = provider === 'ookla'
+      ? await runOoklaSpeedTest()
+      : provider === 'librespeed'
+        ? await runLibreSpeedTest(options.librespeedServerUrl)
+        : await runHttpSpeedTest(provider);
     if (!result.error) {
       return attempt === 1 ? result : { ...result, diagnostics: `Succeeded on attempt ${attempt} after retry.` };
     }

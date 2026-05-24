@@ -70,6 +70,7 @@ db.exec(`
     response_server TEXT DEFAULT '',
     content_type TEXT DEFAULT '',
     status TEXT NOT NULL,
+    status_reason TEXT DEFAULT '',
     error_message TEXT DEFAULT '',
     FOREIGN KEY(site_id) REFERENCES my_sites(id) ON DELETE CASCADE
   );
@@ -113,6 +114,15 @@ for (const [column, sql] of missingLatencyColumns) {
   if (!latencyColumnNames.has(column)) db.exec(sql);
 }
 
+const siteCheckColumns = db.prepare(`PRAGMA table_info(site_checks)`).all() as { name: string }[];
+const siteCheckColumnNames = new Set(siteCheckColumns.map(c => c.name));
+const missingSiteCheckColumns: [string, string][] = [
+  ['status_reason', `ALTER TABLE site_checks ADD COLUMN status_reason TEXT DEFAULT ''`],
+];
+for (const [column, sql] of missingSiteCheckColumns) {
+  if (!siteCheckColumnNames.has(column)) db.exec(sql);
+}
+
 export type MySiteInput = {
   name: string;
   url: string;
@@ -132,6 +142,13 @@ const DEFAULTS: Record<string, string> = {
   speed_test_provider: 'cloudflare',
   speed_test_auto_round_robin: 'false',
   speed_test_round_robin_index: '0',
+  librespeed_server_url: '',
+  notifications_enabled: 'false',
+  notification_webhook_url: '',
+  notify_site_down: 'true',
+  notify_site_slow: 'true',
+  notify_speed_low: 'true',
+  public_status_enabled: 'false',
   latency_sites: JSON.stringify(['https://google.com', 'https://cloudflare.com', 'https://github.com']),
 };
 
@@ -272,6 +289,17 @@ export function getMySite(id: number) {
   return db.prepare('SELECT * FROM my_sites WHERE id = ?').get(id) as any;
 }
 
+export function getLatestSiteCheck(siteId: number) {
+  return db.prepare(`
+    SELECT c.*, s.name AS site_name
+    FROM site_checks c
+    JOIN my_sites s ON s.id = c.site_id
+    WHERE c.site_id = ?
+    ORDER BY c.timestamp DESC
+    LIMIT 1
+  `).get(siteId) as any;
+}
+
 export function dueMySites(now = new Date()) {
   const rows = db.prepare(`
     SELECT s.*,
@@ -305,10 +333,18 @@ export function insertSiteCheck(site: any, result: {
       : result.latency_ms != null && result.latency_ms > threshold
         ? 'slow'
         : 'ok';
+  const statusReason = siteStatusReason({
+    status,
+    latency_ms: result.latency_ms,
+    http_status: result.http_status,
+    expected_status: expectedStatus,
+    latency_threshold_ms: threshold,
+    error_message: result.error_message,
+  });
 
   return db.prepare(`
-    INSERT INTO site_checks (site_id, timestamp, url, final_url, latency_ms, http_status, expected_status, latency_threshold_ms, status_text, response_server, content_type, status, error_message)
-    VALUES (?, datetime('now'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO site_checks (site_id, timestamp, url, final_url, latency_ms, http_status, expected_status, latency_threshold_ms, status_text, response_server, content_type, status, status_reason, error_message)
+    VALUES (?, datetime('now'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     site.id,
     site.url,
@@ -321,18 +357,73 @@ export function insertSiteCheck(site: any, result: {
     result.response_server,
     result.content_type,
     status,
+    statusReason,
     result.error_message,
   );
 }
 
+export function siteStatusReason(check: {
+  status: string;
+  latency_ms: number | null;
+  http_status: number | null;
+  expected_status: number;
+  latency_threshold_ms: number;
+  error_message?: string | null;
+}) {
+  if (check.status === 'ok') return 'Healthy';
+  if (check.status === 'slow') {
+    return `Latency ${Math.round(check.latency_ms ?? 0)} ms exceeded ${check.latency_threshold_ms} ms`;
+  }
+  if (check.status === 'bad_status') {
+    return `Expected HTTP ${check.expected_status}, got ${check.http_status ?? 'none'}`;
+  }
+  if (check.status === 'timeout') return 'Request timed out';
+  if (check.error_message) return check.error_message;
+  return check.status.replace(/_/g, ' ');
+}
+
 export function getSiteChecks(sinceIso: string, limit = 1000) {
   return db.prepare(`
-    SELECT c.*, s.name AS site_name
-    FROM site_checks c
-    JOIN my_sites s ON s.id = c.site_id
-    WHERE c.timestamp >= ?
-    ORDER BY c.timestamp ASC
-    LIMIT ?
+    SELECT *
+    FROM (
+      SELECT c.*, s.name AS site_name
+      FROM site_checks c
+      JOIN my_sites s ON s.id = c.site_id
+      WHERE c.timestamp >= ?
+      ORDER BY c.timestamp DESC
+      LIMIT ?
+    )
+    ORDER BY timestamp ASC
+  `).all(sinceIso, limit);
+}
+
+export function getSiteChecksForSite(siteId: number, sinceIso: string, limit = 1000) {
+  return db.prepare(`
+    SELECT *
+    FROM (
+      SELECT c.*, s.name AS site_name
+      FROM site_checks c
+      JOIN my_sites s ON s.id = c.site_id
+      WHERE c.site_id = ? AND c.timestamp >= ?
+      ORDER BY c.timestamp DESC
+      LIMIT ?
+    )
+    ORDER BY timestamp ASC
+  `).all(siteId, sinceIso, limit);
+}
+
+export function getAllSiteChecksSince(sinceIso: string, limit = 5000) {
+  return db.prepare(`
+    SELECT *
+    FROM (
+      SELECT c.*, s.name AS site_name
+      FROM site_checks c
+      JOIN my_sites s ON s.id = c.site_id
+      WHERE c.timestamp >= ?
+      ORDER BY c.timestamp DESC
+      LIMIT ?
+    )
+    ORDER BY timestamp ASC
   `).all(sinceIso, limit);
 }
 

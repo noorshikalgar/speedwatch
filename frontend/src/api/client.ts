@@ -41,11 +41,18 @@ export interface Settings {
   display_timezone: string;
   speed_test_provider: SpeedTestProvider;
   speed_test_auto_round_robin: boolean;
+  librespeed_server_url: string;
+  notifications_enabled: boolean;
+  notification_webhook_url: string;
+  notify_site_down: boolean;
+  notify_site_slow: boolean;
+  notify_speed_low: boolean;
+  public_status_enabled: boolean;
   latency_sites: string[];
 }
 
 export type TimeRange = '24h' | '7d' | '30d' | '90d';
-export type SpeedTestProvider = 'cloudflare' | 'google' | 'ookla';
+export type SpeedTestProvider = 'cloudflare' | 'google' | 'ookla' | 'librespeed';
 
 export interface MySite {
   id: number;
@@ -77,7 +84,54 @@ export interface SiteCheck {
   response_server: string;
   content_type: string;
   status: string;
+  status_reason: string;
   error_message: string;
+}
+
+export interface SiteStats {
+  total: number;
+  up: number;
+  slow: number;
+  failures: number;
+  avg_latency_ms: number | null;
+  uptime_pct: number | null;
+  health_score: number | null;
+}
+
+export interface SiteIncident {
+  status: string;
+  started_at: string;
+  ended_at: string | null;
+  recovered_at: string | null;
+  active: boolean;
+  reason: string;
+  checks: number;
+  duration_minutes: number;
+}
+
+export interface SiteSummary extends MySite {
+  latest: SiteCheck | null;
+  stats: Record<'24h' | '7d' | '30d', SiteStats>;
+  health_score: number | null;
+  status_reason: string | null;
+  recent_incidents: SiteIncident[];
+}
+
+export interface SiteDetail {
+  site: MySite;
+  checks: SiteCheck[];
+  stats: Record<'24h' | '7d' | '30d', SiteStats>;
+  incidents: SiteIncident[];
+}
+
+export interface PublicStatusSite {
+  id: number;
+  name: string;
+  status: string;
+  status_reason: string | null;
+  last_checked_at: string | null;
+  latency_ms: number | null;
+  stats: Record<'24h' | '7d' | '30d', SiteStats>;
 }
 
 export type MySitePayload = {
@@ -104,6 +158,7 @@ export const speedApi = {
     api<{ rows: SpeedResult[]; total: number }>(`/speeds/page?page=${page}&pageSize=${pageSize}`),
   run: () => api<{ success: boolean; latest: SpeedResult }>('/speeds/run', { method: 'POST' }),
   status: () => api<{ isRunning: boolean; lastRun: string | null; nextRun: string | null }>('/speeds/status'),
+  exportUrl: (range: TimeRange = '30d') => `${API}/speeds/export.csv?range=${range}`,
 };
 
 export const settingsApi = {
@@ -122,6 +177,8 @@ export const latencyApi = {
 
 export const sitesApi = {
   list: () => api<MySite[]>('/sites'),
+  summary: () => api<SiteSummary[]>('/sites/summary'),
+  detail: (id: number, range: '24h' | '7d' | '30d' = '30d') => api<SiteDetail>(`/sites/${id}?range=${range}`),
   create: (data: Partial<MySitePayload>) =>
     api<{ success: boolean; id: number }>('/sites', {
       method: 'POST',
@@ -136,5 +193,9 @@ export const sitesApi = {
     }),
   remove: (id: number) => api<{ success: boolean }>(`/sites/${id}`, { method: 'DELETE' }),
   run: (id: number) => api<{ success: boolean; id: number }>(`/sites/${id}/check`, { method: 'POST' }),
-  checks: (range: '24h' | '7d' | '30d') => api<SiteCheck[]>(`/sites/checks?range=${range}`),
+  runAll: () => api<{ success: boolean; checked: number }>('/sites/run-all', { method: 'POST' }),
+  checks: (range: '24h' | '7d' | '30d', limit = 1000) => api<SiteCheck[]>(`/sites/checks?range=${range}&limit=${limit}`),
+  exportUrl: (range: '24h' | '7d' | '30d' = '30d') => `${API}/sites/export.csv?range=${range}`,
+  exportSiteUrl: (id: number, range: '24h' | '7d' | '30d' = '30d') => `${API}/sites/${id}/export.csv?range=${range}`,
+  publicStatus: () => api<{ updated_at: string; sites: PublicStatusSite[] }>('/sites/public'),
 };

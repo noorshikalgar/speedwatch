@@ -21,9 +21,9 @@ export function AlertBanner({ latest, settings }: AlertBannerProps) {
   if (issues.length === 0) return null;
 
   return (
-    <div className="border border-red-500/40 bg-red-500/10 px-4 py-3 flex items-start gap-3">
-      <AlertTriangle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
-      <div className="text-sm text-red-300 space-y-0.5">
+    <div className="border border-destructive/40 bg-destructive/10 px-4 py-3 flex items-start gap-3">
+      <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+      <div className="text-sm text-destructive space-y-0.5">
         {issues.map((issue, i) => (
           <p key={i}>Speed below plan threshold — {issue}</p>
         ))}

@@ -13,8 +13,15 @@ interface CombinedChartProps {
   settings: Settings | null;
 }
 
-// Colors for per-site latency lines (not orange — that's ping)
-const SITE_PALETTE = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#84cc16', '#a855f7', '#3b82f6'];
+const SITE_PALETTE = [
+  'hsl(var(--primary))',
+  'hsl(var(--info))',
+  'hsl(var(--success))',
+  'hsl(var(--warning))',
+  'hsl(var(--metric-jitter))',
+  'hsl(var(--metric-download))',
+  'hsl(var(--metric-upload))',
+];
 
 function hostname(url: string) {
   try { return new URL(url).hostname; } catch { return url; }
@@ -128,15 +135,15 @@ export function CombinedChart({ speedData, latencyData, settings }: CombinedChar
         {/* inline legend */}
         <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-5" style={{ background: 'rgba(34,211,238,0.6)' }} />
+            <span className="inline-block h-2 w-5 bg-metric-download/60" />
             DL ({ul})
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-5" style={{ background: 'rgba(74,222,128,0.6)' }} />
+            <span className="inline-block h-2 w-5 bg-metric-upload/60" />
             UL ({ul})
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-0.5 w-5 border-t-2 border-orange-400 border-dashed" />
+            <span className="inline-block h-0.5 w-5 border-t-2 border-metric-latency border-dashed" />
             Ping
           </span>
           {siteKeys.map((k, i) => (
@@ -158,12 +165,12 @@ export function CombinedChart({ speedData, latencyData, settings }: CombinedChar
             <ComposedChart data={rows} margin={{ top: 4, right: 36, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="cgDl" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
+                  <stop offset="5%" stopColor="hsl(var(--metric-download))" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="hsl(var(--metric-download))" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="cgUl" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#4ade80" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#4ade80" stopOpacity={0} />
+                  <stop offset="5%" stopColor="hsl(var(--metric-upload))" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="hsl(var(--metric-upload))" stopOpacity={0} />
                 </linearGradient>
               </defs>
 
@@ -200,13 +207,13 @@ export function CombinedChart({ speedData, latencyData, settings }: CombinedChar
               {/* Speed areas */}
               <Area
                 yAxisId="speed" type="monotone" dataKey="download" name={`Download`}
-                stroke="#22d3ee" strokeWidth={1.5} fill="url(#cgDl)"
+                stroke="hsl(var(--metric-download))" strokeWidth={1.5} fill="url(#cgDl)"
                 dot={false} activeDot={{ r: 3 }} connectNulls={true}
                 isAnimationActive animationDuration={800} animationEasing="ease-out"
               />
               <Area
                 yAxisId="speed" type="monotone" dataKey="upload" name={`Upload`}
-                stroke="#4ade80" strokeWidth={1.5} fill="url(#cgUl)"
+                stroke="hsl(var(--metric-upload))" strokeWidth={1.5} fill="url(#cgUl)"
                 dot={false} activeDot={{ r: 3 }} connectNulls={true}
                 isAnimationActive animationDuration={1000} animationEasing="ease-out"
               />
@@ -214,7 +221,7 @@ export function CombinedChart({ speedData, latencyData, settings }: CombinedChar
               {/* Ping from speed test */}
               <Line
                 yAxisId="latency" type="monotone" dataKey="ping" name="Ping"
-                stroke="#fb923c" strokeWidth={1.5} strokeDasharray="4 3"
+                stroke="hsl(var(--metric-latency))" strokeWidth={1.5} strokeDasharray="4 3"
                 dot={false} activeDot={{ r: 3 }} connectNulls={true}
                 isAnimationActive animationDuration={1200} animationEasing="ease-out"
               />

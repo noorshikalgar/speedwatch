@@ -18,6 +18,24 @@ router.get('/', (req, res) => {
   res.json(results);
 });
 
+function csvEscape(value: unknown): string {
+  const text = value === null || value === undefined ? '' : String(value);
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+router.get('/export.csv', (req, res) => {
+  const range = (req.query.range as string) ?? '30d';
+  const rows = getSpeedResults(rangeToIso(range), 5000) as Record<string, unknown>[];
+  const columns = ['timestamp', 'download_mbps', 'upload_mbps', 'ping_ms', 'jitter_ms', 'test_provider', 'server_name', 'server_location', 'isp_name', 'client_ip', 'result_url', 'is_manual', 'error'];
+  const csv = [
+    columns.join(','),
+    ...rows.map(row => columns.map(column => csvEscape(row[column])).join(',')),
+  ].join('\n');
+  res.header('Content-Type', 'text/csv');
+  res.attachment(`speedwatch-speed-tests-${range}.csv`);
+  res.send(csv);
+});
+
 router.get('/latest', (_req, res) => {
   res.json(getLatestSpeed() ?? null);
 });

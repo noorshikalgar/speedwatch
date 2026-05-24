@@ -88,12 +88,12 @@ export function SpeedChart({ data, settings, range, onRangeChange, compact = fal
             <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradDl" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
+                  <stop offset="5%" stopColor="hsl(var(--metric-download))" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="hsl(var(--metric-download))" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradUl" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#4ade80" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#4ade80" stopOpacity={0} />
+                  <stop offset="5%" stopColor="hsl(var(--metric-upload))" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="hsl(var(--metric-upload))" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -119,22 +119,22 @@ export function SpeedChart({ data, settings, range, onRangeChange, compact = fal
               {settings && (
                 <ReferenceLine
                   y={planDisplayVal}
-                  stroke="#ef4444"
+                  stroke="hsl(var(--destructive))"
                   strokeDasharray="6 3"
                   strokeOpacity={0.7}
-                  label={{ value: `plan ${planDisplayVal.toFixed(unit === 'MBps' ? 1 : 0)}`, fill: '#ef4444', fontSize: 10, fontFamily: 'monospace', position: 'insideTopRight' }}
+                  label={{ value: `plan ${planDisplayVal.toFixed(unit === 'MBps' ? 1 : 0)}`, fill: 'hsl(var(--destructive))', fontSize: 10, fontFamily: 'monospace', position: 'insideTopRight' }}
                 />
               )}
               <Area
                 type="monotone" dataKey="download" name={`Download (${ul})`}
-                stroke="#22d3ee" strokeWidth={1.5} fill="url(#gradDl)"
-                dot={false} activeDot={{ r: 3, fill: '#22d3ee' }} connectNulls={true}
+                stroke="hsl(var(--metric-download))" strokeWidth={1.5} fill="url(#gradDl)"
+                dot={false} activeDot={{ r: 3, fill: 'hsl(var(--metric-download))' }} connectNulls={true}
                 isAnimationActive animationDuration={800} animationEasing="ease-out"
               />
               <Area
                 type="monotone" dataKey="upload" name={`Upload (${ul})`}
-                stroke="#4ade80" strokeWidth={1.5} fill="url(#gradUl)"
-                dot={false} activeDot={{ r: 3, fill: '#4ade80' }} connectNulls={true}
+                stroke="hsl(var(--metric-upload))" strokeWidth={1.5} fill="url(#gradUl)"
+                dot={false} activeDot={{ r: 3, fill: 'hsl(var(--metric-upload))' }} connectNulls={true}
                 isAnimationActive animationDuration={1000} animationEasing="ease-out"
               />
             </AreaChart>

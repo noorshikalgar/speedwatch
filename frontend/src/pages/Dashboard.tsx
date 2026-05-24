@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Play, RefreshCw, ChevronLeft, ChevronRight, BarChart2, Zap, Activity, Globe } from 'lucide-react';
 import {
@@ -25,6 +26,17 @@ import { formatActivityTime, formatTimeOnly } from '@/lib/datetime';
 
 type LatencyRange = '24h' | '7d' | '30d';
 type ViewTab = 'combined' | 'speed' | 'latency' | 'sites';
+const VIEW_TABS: ViewTab[] = ['combined', 'speed', 'latency', 'sites'];
+
+function isViewTab(value: string | null): value is ViewTab {
+  return !!value && VIEW_TABS.includes(value as ViewTab);
+}
+
+function initialView(searchTab: string | null): ViewTab {
+  if (isViewTab(searchTab)) return searchTab;
+  const stored = sessionStorage.getItem('sw_dashboard_tab');
+  return isViewTab(stored) ? stored : 'combined';
+}
 
 function host(url: string) {
   try { return new URL(url).hostname; } catch { return url; }
@@ -131,8 +143,8 @@ function CombinedTable({ speedRows, latencyRows, settings }: {
                       className={cn(
                         'cursor-pointer hover:bg-muted/30 transition-colors animate-in fade-in-0 slide-in-from-bottom-1',
                         isNewBatch ? 'border-t-2 border-primary/25' : 'border-t border-border/40',
-                        isLow  && 'bg-red-950/20',
-                        isWarn && 'bg-amber-950/10',
+                        isLow  && 'bg-destructive/10',
+                        isWarn && 'bg-warning/10',
                       )}
                       style={{ animationDelay: `${i * 20}ms`, animationDuration: '200ms' }}
                     >
@@ -146,13 +158,13 @@ function CombinedTable({ speedRows, latencyRows, settings }: {
                         </div>
                       </td>
                       <td className={cn('px-3 py-2.5 text-xs tabular-nums font-semibold',
-                        isLow ? 'text-red-400' : isWarn ? 'text-amber-400' : 'text-cyan-400')}>
+                        isLow ? 'text-destructive' : isWarn ? 'text-warning' : 'text-metric-download')}>
                         {fmtSpeed(row.download_mbps, unit)}
                       </td>
-                      <td className="px-3 py-2.5 text-xs tabular-nums text-right text-emerald-400 hidden sm:table-cell">
+                      <td className="px-3 py-2.5 text-xs tabular-nums text-right text-metric-upload hidden sm:table-cell">
                         {fmtSpeed(row.upload_mbps, unit)}
                       </td>
-                      <td className="px-3 py-2.5 text-xs tabular-nums text-right text-orange-400">
+                      <td className="px-3 py-2.5 text-xs tabular-nums text-right text-metric-latency">
                         {fmtMs(row.ping_ms)}
                       </td>
                       <td className="px-3 py-2.5">
@@ -187,7 +199,7 @@ function CombinedTable({ speedRows, latencyRows, settings }: {
                     <td className="px-3 py-2 text-xs font-medium text-foreground">{host(row.url)}</td>
                     <td className="px-3 py-2 text-xs text-right text-muted-foreground/40 hidden sm:table-cell">—</td>
                     <td className={cn('px-3 py-2 text-xs tabular-nums text-right',
-                      isOk ? 'text-orange-400' : 'text-muted-foreground/50')}>
+                      isOk ? 'text-metric-latency' : 'text-muted-foreground/50')}>
                       {isOk && row.latency_ms != null ? fmtMs(row.latency_ms) : '—'}
                     </td>
                     <td className="px-3 py-2">
@@ -219,7 +231,8 @@ function CombinedTable({ speedRows, latencyRows, settings }: {
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 export function Dashboard() {
-  const [view, setView] = useState<ViewTab>('combined');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [view, setViewState] = useState<ViewTab>(() => initialView(searchParams.get('tab')));
   const [speedRange, setSpeedRange]   = useState<TimeRange>('24h');
   const [latencyRange, setLatencyRange] = useState<LatencyRange>('24h');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -252,6 +265,23 @@ export function Dashboard() {
 
   const isTestRunning = runMutation.isPending || status?.isRunning;
 
+  function setView(nextView: ViewTab) {
+    setViewState(nextView);
+    sessionStorage.setItem('sw_dashboard_tab', nextView);
+    const next = new URLSearchParams(searchParams);
+    if (nextView === 'combined') next.delete('tab');
+    else next.set('tab', nextView);
+    setSearchParams(next, { replace: true });
+  }
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (isViewTab(tab) && tab !== view) {
+      setViewState(tab);
+      sessionStorage.setItem('sw_dashboard_tab', tab);
+    }
+  }, [searchParams, view]);
+
   // (countdown lives in Header now — no local countdown state needed)
 
   // update document title while testing
@@ -271,26 +301,22 @@ export function Dashboard() {
   const MonitorControls = (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        {/* EVERY pill — cyan */}
-        <div className="flex items-center border border-cyan-800/40 bg-cyan-950/30 text-[11px] uppercase tracking-wider overflow-hidden">
-          <span className="px-2 py-1 text-cyan-600">Every</span>
-          <span className="px-2 py-1 text-cyan-300 border-l border-cyan-800/40">{intervalLabel(settings?.test_interval_minutes)}</span>
+        <div className="flex items-center border border-info/35 bg-info/10 text-[11px] uppercase tracking-wider overflow-hidden">
+          <span className="px-2 py-1 text-info/75">Every</span>
+          <span className="px-2 py-1 text-info border-l border-info/35">{intervalLabel(settings?.test_interval_minutes)}</span>
         </div>
-        {/* SERVER pill — violet */}
-        <div className="flex items-center border border-violet-800/40 bg-violet-950/30 text-[11px] uppercase tracking-wider overflow-hidden">
-          <span className="px-2 py-1 text-violet-600">Server</span>
-          <span className="px-2 py-1 text-violet-300 border-l border-violet-800/40">{providerSettingLabel(settings)}</span>
+        <div className="flex items-center border border-primary/35 bg-primary/10 text-[11px] uppercase tracking-wider overflow-hidden">
+          <span className="px-2 py-1 text-primary/75">Server</span>
+          <span className="px-2 py-1 text-primary border-l border-primary/35">{providerSettingLabel(settings)}</span>
         </div>
-        {/* ALERT pill — amber */}
-        <div className="flex items-center border border-amber-800/40 bg-amber-950/30 text-[11px] uppercase tracking-wider overflow-hidden">
-          <span className="px-2 py-1 text-amber-600">Alert</span>
-          <span className="px-2 py-1 text-amber-300 border-l border-amber-800/40">{settings ? `${100 - settings.alert_threshold_pct}% of plan` : '—'}</span>
+        <div className="flex items-center border border-warning/35 bg-warning/10 text-[11px] uppercase tracking-wider overflow-hidden">
+          <span className="px-2 py-1 text-warning/75">Alert</span>
+          <span className="px-2 py-1 text-warning border-l border-warning/35">{settings ? `${100 - settings.alert_threshold_pct}% of plan` : '—'}</span>
         </div>
-        {/* NEXT RUN pill — emerald — always visible, shows absolute time */}
         {status?.nextRun && (
-          <div className="flex items-center border border-emerald-800/40 bg-emerald-950/30 text-[11px] uppercase tracking-wider overflow-hidden tabular-nums">
-            <span className="px-2 py-1 text-emerald-600">Next</span>
-            <span className="px-2 py-1 text-emerald-300 border-l border-emerald-800/40">
+          <div className="flex items-center border border-success/35 bg-success/10 text-[11px] uppercase tracking-wider overflow-hidden tabular-nums">
+            <span className="px-2 py-1 text-success/75">Next</span>
+            <span className="px-2 py-1 text-success border-l border-success/35">
               {formatTimeOnly(status.nextRun, settings?.display_timezone)}
             </span>
           </div>

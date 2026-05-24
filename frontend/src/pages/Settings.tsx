@@ -48,6 +48,7 @@ const SPEED_TEST_PROVIDERS = [
   { label: 'Cloudflare', value: 'cloudflare' },
   { label: 'Google', value: 'google' },
   { label: 'Ookla Speedtest', value: 'ookla' },
+  { label: 'LibreSpeed', value: 'librespeed' },
 ] as const;
 
 export function SettingsPage() {
@@ -214,6 +215,20 @@ export function SettingsPage() {
             {form.speed_test_provider === 'ookla' && !form.speed_test_auto_round_robin && (
               <p className="text-xs text-muted-foreground">Ookla requires the official speedtest CLI on the server.</p>
             )}
+            {form.speed_test_provider === 'librespeed' && !form.speed_test_auto_round_robin && (
+              <div className="space-y-2">
+                <Label htmlFor="librespeed-server-url">LibreSpeed server URL</Label>
+                <Input
+                  id="librespeed-server-url"
+                  placeholder="https://speed.example.com"
+                  value={form.librespeed_server_url}
+                  onChange={(e) => set('librespeed_server_url', e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Use your own LibreSpeed server. SpeedWatch will try the common `/backend` layout and the server root.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -254,6 +269,63 @@ export function SettingsPage() {
                 ))}
               </SelectContent>
             </Select>
+          </CardContent>
+        </Card>
+
+        {/* Notifications */}
+        <Card>
+          <CardHeader><CardTitle>Notifications</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="notifications-enabled"
+                checked={form.notifications_enabled}
+                onCheckedChange={(checked) => set('notifications_enabled', checked)}
+              />
+              <Label htmlFor="notifications-enabled">Enable webhook alerts</Label>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notification-webhook">Webhook URL</Label>
+              <Input
+                id="notification-webhook"
+                placeholder="Discord, Slack, n8n, Make, or any JSON webhook"
+                value={form.notification_webhook_url}
+                onChange={(e) => set('notification_webhook_url', e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">SpeedWatch posts JSON with `content`, `text`, `event`, and `details` fields.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                ['notify_site_down', 'Site down'],
+                ['notify_site_slow', 'Site slow'],
+                ['notify_speed_low', 'Speed below plan'],
+              ].map(([key, label]) => (
+                <div key={key} className="flex items-center gap-2 border border-border bg-background px-3 py-2">
+                  <Switch
+                    id={key}
+                    checked={Boolean(form[key as keyof Settings])}
+                    onCheckedChange={(checked) => set(key as keyof Settings, checked as never)}
+                  />
+                  <Label htmlFor={key} className="text-xs">{label}</Label>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Public Status */}
+        <Card>
+          <CardHeader><CardTitle>Public Status Page</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="public-status-enabled"
+                checked={form.public_status_enabled}
+                onCheckedChange={(checked) => set('public_status_enabled', checked)}
+              />
+              <Label htmlFor="public-status-enabled">Enable read-only public status page</Label>
+            </div>
+            <code className="block border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">/status</code>
           </CardContent>
         </Card>
 

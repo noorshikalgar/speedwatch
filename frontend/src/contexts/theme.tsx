@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
-export type Theme = 'void' | 'terminal' | 'paper' | 'midnight' | 'graphite' | 'ember';
+export type Theme = 'void' | 'terminal' | 'paper' | 'midnight' | 'graphite' | 'ember' | 'japan';
 
 interface ThemeContextType {
   theme: Theme;
@@ -16,12 +16,13 @@ const THEME_LABELS: Record<Theme, string> = {
   midnight: 'Midnight',
   graphite: 'Graphite',
   ember: 'Ember',
+  japan: 'Japan',
 };
 
-export const THEME_LIST: Theme[] = ['void', 'midnight', 'graphite', 'ember', 'terminal', 'paper'];
+export const THEME_LIST: Theme[] = ['void', 'midnight', 'graphite', 'ember', 'japan', 'terminal', 'paper'];
 export { THEME_LABELS };
 
-const THEMES: Theme[] = ['void', 'terminal', 'paper', 'midnight', 'graphite', 'ember'];
+const THEMES: Theme[] = ['void', 'terminal', 'paper', 'midnight', 'graphite', 'ember', 'japan'];
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
@@ -31,7 +32,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const el = document.documentElement;
-    el.classList.remove('theme-void', 'theme-terminal', 'theme-paper', 'theme-midnight', 'theme-graphite', 'theme-ember');
+    el.classList.remove('theme-void', 'theme-terminal', 'theme-paper', 'theme-midnight', 'theme-graphite', 'theme-ember', 'theme-japan');
     el.classList.add(`theme-${theme}`);
   }, [theme]);
 

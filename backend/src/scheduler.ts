@@ -1,7 +1,8 @@
 import cron from 'node-cron';
 import { normalizeSpeedTestProvider, runSpeedTest, type SpeedTestProvider } from './speedtest.js';
 import { checkLatency } from './latency.js';
-import { dueMySites, getSetting, insertSiteCheck, setSetting, insertSpeedResult, insertLatencyCheck, pruneOldData } from './db.js';
+import { dueMySites, getLatestSiteCheck, getSetting, insertSiteCheck, setSetting, insertSpeedResult, insertLatencyCheck, pruneOldData } from './db.js';
+import { sendNotification } from './notifications.js';
 
 let currentTask: cron.ScheduledTask | null = null;
 let siteMonitorTimer: NodeJS.Timeout | null = null;
@@ -48,9 +49,22 @@ async function runAllTests() {
 
   try {
     const provider = nextProvider();
-    const result = await runSpeedTest(provider);
+    const result = await runSpeedTest(provider, {
+      librespeedServerUrl: getSetting('librespeed_server_url') ?? '',
+    });
     insertSpeedResult({ ...result, is_manual: false });
     console.log(`[scheduler] Done — ${provider} — ${result.download_mbps ?? 'ERR'} Mbps down`);
+
+    const planDownload = Number(getSetting('plan_download_mbps') ?? '100');
+    const thresholdPct = Number(getSetting('alert_threshold_pct') ?? '20');
+    const lowLimit = planDownload * ((100 - thresholdPct) / 100);
+    if (!result.error && result.download_mbps != null && result.download_mbps < lowLimit) {
+      await sendNotification(
+        'speed_low',
+        `SpeedWatch: download speed is low (${result.download_mbps.toFixed(1)} Mbps, plan ${planDownload} Mbps).`,
+        { provider, download_mbps: result.download_mbps, plan_download_mbps: planDownload },
+      );
+    }
 
     const sitesRaw = getSetting('latency_sites') ?? '[]';
     const sites: string[] = JSON.parse(sitesRaw);
@@ -74,8 +88,18 @@ async function runDueSiteChecks() {
   try {
     const sites = dueMySites();
     for (const site of sites) {
+      const previous = getLatestSiteCheck(Number(site.id));
       const result = await checkLatency(site.url);
       insertSiteCheck(site, result);
+      const latest = getLatestSiteCheck(Number(site.id));
+      const previousHealthy = !previous || previous.status === 'ok';
+      if (latest && latest.status !== 'ok' && previousHealthy) {
+        await sendNotification(
+          latest.status === 'slow' ? 'site_slow' : 'site_down',
+          `SpeedWatch: ${site.name} is ${latest.status} — ${latest.status_reason || latest.error_message || 'check failed'}.`,
+          { site_id: site.id, url: site.url, status: latest.status, reason: latest.status_reason },
+        );
+      }
     }
   } catch (err) {
     console.error('[sites] Error during site checks:', err);
