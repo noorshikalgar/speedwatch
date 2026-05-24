@@ -37,6 +37,7 @@ export function StatCards({ latest, settings }: StatCardsProps) {
       unit: ul,
       icon: ArrowDown,
       color: 'text-metric-download',
+      motion: 'stat-icon-download',
       status: dlStatus,
       planMbps: planDl,
     },
@@ -46,6 +47,7 @@ export function StatCards({ latest, settings }: StatCardsProps) {
       unit: ul,
       icon: ArrowUp,
       color: 'text-metric-upload',
+      motion: 'stat-icon-upload',
       status: ulStatus,
       planMbps: planUl,
     },
@@ -55,6 +57,7 @@ export function StatCards({ latest, settings }: StatCardsProps) {
       unit: 'ms',
       icon: Clock,
       color: 'text-metric-latency',
+      motion: 'stat-icon-ping',
       status: null,
       planMbps: null,
     },
@@ -64,6 +67,7 @@ export function StatCards({ latest, settings }: StatCardsProps) {
       unit: 'ms',
       icon: Waves,
       color: 'text-metric-jitter',
+      motion: 'stat-icon-jitter',
       status: null,
       planMbps: null,
     },
@@ -78,7 +82,7 @@ export function StatCards({ latest, settings }: StatCardsProps) {
               <CardTitle>{card.label}</CardTitle>
               <div className="flex items-center gap-1.5">
                 {card.status && <StatusDot status={card.status} />}
-                <card.icon className={cn('h-4 w-4', card.color)} />
+                <card.icon className={cn('h-4 w-4', card.color, card.motion)} />
               </div>
             </div>
             <div className="flex items-baseline gap-1.5">

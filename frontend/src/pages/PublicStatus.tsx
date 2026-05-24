@@ -3,6 +3,7 @@ import { Activity } from 'lucide-react';
 import { sitesApi } from '@/api/client';
 import { Badge } from '@/components/ui/badge';
 import { formatActivityTime } from '@/lib/datetime';
+import { cn } from '@/lib/utils';
 
 function statusBadge(status?: string | null) {
   if (status === 'ok') return <Badge variant="success">operational</Badge>;
@@ -23,16 +24,17 @@ export function PublicStatusPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-10">
-        <div className="flex items-center justify-between gap-4 border-b border-border pb-6">
-          <div>
-            <h1 className="text-xl font-semibold uppercase tracking-widest">SpeedWatch Status</h1>
+      <main className="mx-auto w-full max-w-4xl space-y-4 px-3 py-6 sm:px-4 sm:py-10">
+        <div className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-lg font-semibold uppercase tracking-widest sm:text-xl">{data?.title ?? 'SpeedWatch Status'}</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {data?.updated_at ? `Updated ${formatActivityTime(data.updated_at, undefined, true)}` : 'Public status'}
             </p>
+            {data?.message && <p className="mt-2 max-w-2xl text-xs text-muted-foreground">{data.message}</p>}
           </div>
           <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-primary" />
+            <Activity className="status-ecg h-4 w-4 text-primary" />
             {data && statusBadge(allOk ? 'ok' : 'degraded')}
           </div>
         </div>
@@ -43,18 +45,30 @@ export function PublicStatusPage() {
         {data && (
           <div className="space-y-2">
             {data.sites.map(site => (
-              <div key={site.id} className="grid gap-3 border border-border bg-card p-4 sm:grid-cols-[1fr_auto] sm:items-center">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{site.name}</span>
+              <div key={site.id} className="grid gap-4 border border-border bg-card p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
+                <div className="min-w-0">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <span className="truncate text-sm font-semibold">{site.name}</span>
                     {statusBadge(site.status)}
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{site.status_reason ?? 'Healthy'}</p>
+                  <p className="mt-2 truncate text-xs text-muted-foreground">{site.status_reason ?? 'Healthy'}</p>
+                  <p className="mt-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+                    Last checked {site.last_checked_at ? formatActivityTime(site.last_checked_at, undefined, true) : '—'}
+                  </p>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-right text-xs tabular-nums">
-                  <div><div className="text-muted-foreground">24h</div><div>{site.stats['24h'].uptime_pct ?? '—'}%</div></div>
-                  <div><div className="text-muted-foreground">7d</div><div>{site.stats['7d'].uptime_pct ?? '—'}%</div></div>
-                  <div><div className="text-muted-foreground">ms</div><div>{site.latency_ms != null ? Math.round(site.latency_ms) : '—'}</div></div>
+                <div className="grid gap-2 text-xs tabular-nums sm:grid-cols-3">
+                  {[
+                    ['24h uptime', site.stats['24h'].uptime_pct != null ? `${site.stats['24h'].uptime_pct}%` : '—'],
+                    ['7d uptime', site.stats['7d'].uptime_pct != null ? `${site.stats['7d'].uptime_pct}%` : '—'],
+                    ...(data.show_latency ? [['latency', site.latency_ms != null ? `${Math.round(site.latency_ms)} ms` : '—']] : []),
+                  ].map(([label, value]) => (
+                    <div key={label} className="min-h-[58px] border border-border bg-background px-3 py-2 text-left sm:text-right">
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+                      <div className={cn('mt-2 text-base font-semibold', label === 'latency' && 'text-metric-latency')}>
+                        {value}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

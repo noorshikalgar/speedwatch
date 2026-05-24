@@ -36,6 +36,13 @@ function toCsv(rows: Record<string, unknown>[], columns: string[]) {
   ].join('\n');
 }
 
+function exportName(parts: string[]) {
+  return `${parts
+    .map(part => part.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''))
+    .filter(Boolean)
+    .join('-')}.csv`;
+}
+
 function checkTime(check: any) {
   return new Date(String(check.timestamp).replace(' ', 'T') + 'Z').getTime();
 }
@@ -118,14 +125,30 @@ function withStatusReasons(checks: any[]) {
   }));
 }
 
+function inMaintenance(site: any, now = new Date()) {
+  try {
+    const windows = JSON.parse(site.maintenance_windows || '[]') as Array<{ start: string; end: string }>;
+    return windows.some(window => {
+      const start = new Date(window.start).getTime();
+      const end = new Date(window.end).getTime();
+      return Number.isFinite(start) && Number.isFinite(end) && now.getTime() >= start && now.getTime() <= end;
+    });
+  } catch {
+    return false;
+  }
+}
+
 async function runSiteCheck(site: any) {
   const previous = getSiteChecksForSite(Number(site.id), rangeToIso('30d'), 1).at(-1) as any;
   const result = await checkLatency(site.url);
   const insert = insertSiteCheck(site, result);
   const latest = (getSiteChecksForSite(Number(site.id), rangeToIso('30d'), 1).at(-1) as any) ?? null;
   const previousHealthy = !previous || previous.status === 'ok';
+  const maintenance = inMaintenance(site);
+  const shouldNotifySlow = latest?.status === 'slow' && site.notify_slow !== 0;
+  const shouldNotifyDown = latest?.status !== 'slow' && latest?.status !== 'ok' && site.notify_down !== 0;
 
-  if (latest && latest.status !== 'ok' && previousHealthy) {
+  if (latest && latest.status !== 'ok' && previousHealthy && !maintenance && (shouldNotifySlow || shouldNotifyDown)) {
     await sendNotification(
       latest.status === 'slow' ? 'site_slow' : 'site_down',
       `SpeedWatch: ${site.name} is ${latest.status} — ${latest.status_reason || latest.error_message || 'check failed'}.`,
@@ -172,6 +195,9 @@ router.get('/public', (_req, res) => {
   for (const check of checks) bySite.set(Number(check.site_id), [...(bySite.get(Number(check.site_id)) ?? []), check]);
 
   res.json({
+    title: getSetting('public_status_title') || 'SpeedWatch Status',
+    message: getSetting('public_status_message') || '',
+    show_latency: getSetting('public_status_show_latency') !== 'false',
     updated_at: new Date().toISOString(),
     sites: sites.filter(site => site.enabled === 1).map(site => {
       const siteChecks = bySite.get(Number(site.id)) ?? [];
@@ -194,7 +220,7 @@ router.get('/export.csv', (req, res) => {
   const rows = withStatusReasons(getSiteChecks(rangeToIso(range), 5000) as any[]);
   const columns = ['timestamp', 'site_name', 'url', 'final_url', 'latency_ms', 'http_status', 'expected_status', 'latency_threshold_ms', 'status', 'status_reason', 'error_message'];
   res.header('Content-Type', 'text/csv');
-  res.attachment(`speedwatch-site-checks-${range}.csv`);
+  res.attachment(exportName(['speedwatch', 'all-sites', 'site-checks', range]));
   res.send(toCsv(rows, columns));
 });
 
@@ -272,7 +298,7 @@ router.get('/:id/export.csv', (req, res) => {
   const rows = withStatusReasons(getSiteChecksForSite(id, rangeToIso(range), 5000) as any[]);
   const columns = ['timestamp', 'site_name', 'url', 'final_url', 'latency_ms', 'http_status', 'expected_status', 'latency_threshold_ms', 'status', 'status_reason', 'error_message'];
   res.header('Content-Type', 'text/csv');
-  res.attachment(`speedwatch-${site.name}-${range}.csv`);
+  res.attachment(exportName(['speedwatch', String(site.name), 'site-checks', range]));
   res.send(toCsv(rows, columns));
 });
 

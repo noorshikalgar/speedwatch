@@ -34,7 +34,11 @@ router.get('/', (_req, res) => {
     notify_site_down: raw.notify_site_down !== 'false',
     notify_site_slow: raw.notify_site_slow !== 'false',
     notify_speed_low: raw.notify_speed_low !== 'false',
+    alert_cooldown_minutes: parseInt(raw.alert_cooldown_minutes ?? '30', 10),
     public_status_enabled: raw.public_status_enabled === 'true',
+    public_status_title: raw.public_status_title ?? 'SpeedWatch Status',
+    public_status_message: raw.public_status_message ?? '',
+    public_status_show_latency: raw.public_status_show_latency !== 'false',
     github_star_enabled: raw.github_star_enabled !== 'false',
     github_repo_url: raw.github_repo_url ?? 'https://github.com/noorshikalgar/speedwatch',
     latency_sites: JSON.parse(raw.latency_sites ?? '[]'),
@@ -43,7 +47,7 @@ router.get('/', (_req, res) => {
 
 router.put('/', (req, res) => {
   const body = req.body as Record<string, unknown>;
-  const allowedNumbers = ['plan_download_mbps', 'plan_upload_mbps', 'test_interval_minutes', 'retention_days', 'alert_threshold_pct'];
+  const allowedNumbers = ['plan_download_mbps', 'plan_upload_mbps', 'test_interval_minutes', 'retention_days', 'alert_threshold_pct', 'alert_cooldown_minutes'];
   const intervalChanged = body.test_interval_minutes !== undefined;
 
   for (const key of allowedNumbers) {
@@ -74,7 +78,7 @@ router.put('/', (req, res) => {
     setSetting('librespeed_server_url', String(body.librespeed_server_url ?? '').trim());
   }
 
-  for (const key of ['notifications_enabled', 'notify_site_down', 'notify_site_slow', 'notify_speed_low', 'public_status_enabled', 'github_star_enabled']) {
+  for (const key of ['notifications_enabled', 'notify_site_down', 'notify_site_slow', 'notify_speed_low', 'public_status_enabled', 'public_status_show_latency', 'github_star_enabled']) {
     if (body[key] !== undefined) setSetting(key, body[key] ? 'true' : 'false');
   }
 
@@ -82,8 +86,8 @@ router.put('/', (req, res) => {
     setSetting('notification_webhook_url', String(body.notification_webhook_url ?? '').trim());
   }
 
-  if (body.github_repo_url !== undefined) {
-    setSetting('github_repo_url', String(body.github_repo_url ?? '').trim());
+  for (const key of ['public_status_title', 'public_status_message']) {
+    if (body[key] !== undefined) setSetting(key, String(body[key] ?? '').trim());
   }
 
   if (intervalChanged) restartScheduler();

@@ -10,9 +10,10 @@
 
 <p align="center">
   <a href="#features">Features</a> ·
+  <a href="#screenshots">Screenshots</a> ·
   <a href="#quick-start">Quick Start</a> ·
   <a href="#docker">Docker</a> ·
-  <a href="#portainer">Portainer</a>
+  <a href="#prometheus--grafana">Prometheus</a>
 </p>
 
 <p align="center">
@@ -20,6 +21,9 @@
   <img alt="React" src="https://img.shields.io/badge/React-dashboard-61DAFB?style=for-the-badge&logo=react&logoColor=111827" />
   <img alt="SQLite" src="https://img.shields.io/badge/SQLite-persistent-003B57?style=for-the-badge&logo=sqlite&logoColor=white" />
   <img alt="Docker" src="https://img.shields.io/badge/Docker-ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
+  <a href="https://github.com/noorshikalgar/speedwatch/stargazers">
+    <img alt="GitHub stars" src="https://img.shields.io/github/stars/noorshikalgar/speedwatch?style=for-the-badge&logo=github" />
+  </a>
 </p>
 
 ---
@@ -38,7 +42,7 @@
 ### Site Monitoring
 ![SpeedWatch site monitoring](assets/screenshots/SpeedWatch-My-Sites.png)
 
-### Latency Monitoring
+### Site Details
 ![SpeedWatch site details](assets/screenshots/SpeedWatch-Site-Details.png)
 
 ---
@@ -46,6 +50,8 @@
 ## Why SpeedWatch?
 
 SpeedWatch runs scheduled speed tests, stores the results locally, and turns them into a clean dashboard with download, upload, ping, latency, provider, and history views.
+
+Built for homelabs, small offices, creators, and anyone who wants private network history without sending it to a hosted SaaS dashboard.
 
 Use it to answer the real questions:
 
@@ -61,8 +67,13 @@ Use it to answer the real questions:
 - Download, upload, ping, jitter, ISP, client IP, and server metadata
 - Latency monitoring for custom URLs
 - "My Sites" checks for tracking websites you care about
+- Per-site detail pages with uptime, latency, incident history, checks, and editable config
+- Public read-only status page for selected monitors
 - Combined dashboard timeline for speed and latency events
 - Threshold alerts based on your internet plan
+- Webhook notifications for slow sites, down sites, and speed drops
+- CSV exports for speed tests, all site checks, and individual site checks
+- Prometheus metrics endpoint for Grafana and other monitoring stacks
 - SQLite persistence with configurable retention
 - Responsive React dashboard with charts, tables, themes, and unit switching
 - Docker and Portainer friendly deployment
@@ -159,6 +170,25 @@ Most app settings are managed from the dashboard.
 | Timezone | `Asia/Kolkata` | Used for dashboard display times |
 | Provider | `Cloudflare` | Can use Cloudflare, Google, Ookla, LibreSpeed, or round-robin mode |
 | LibreSpeed URL | empty | Required when using the LibreSpeed provider; point it at your own LibreSpeed server |
+| Webhook alerts | disabled | Posts JSON alerts to Discord, Slack, n8n, Make, or any webhook endpoint |
+| Public status page | disabled | Exposes a read-only `/status` page for enabled site monitors |
+| GitHub star link | enabled | Can be hidden or pointed at your own fork from Settings |
+
+### LibreSpeed
+
+LibreSpeed support is optional. Point SpeedWatch at your self-hosted LibreSpeed server URL to use an open-source speed test provider. In round-robin mode, LibreSpeed is only used when a URL is configured.
+
+### Public Status Page
+
+Enable the public status page from Settings to expose `/status`, a read-only view of your enabled site monitors. It is designed for quick sharing without exposing dashboard controls.
+
+### CSV Exports
+
+CSV exports are available for speed tests, all site checks, and individual site monitors. They are useful for ISP complaints, debugging, and sharing a clean history outside the dashboard.
+
+### Privacy
+
+SpeedWatch stores results locally in SQLite. No external account, cloud sync, or hosted analytics are required.
 
 Environment variables:
 

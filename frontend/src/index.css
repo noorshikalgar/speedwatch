@@ -248,6 +248,96 @@
 @layer utilities {
   .font-brand { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
   .font-mono { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace; }
+
+  .status-ecg {
+    transform-origin: center;
+    filter: drop-shadow(0 0 0 hsl(var(--primary) / 0));
+    animation: status-ecg 1.6s ease-in-out infinite;
+  }
+
+  .stat-icon-download,
+  .stat-icon-upload,
+  .stat-icon-ping,
+  .stat-icon-jitter {
+    transform-origin: center;
+    animation-duration: 1.9s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+  }
+
+  .stat-icon-download {
+    animation-name: stat-download;
+  }
+
+  .stat-icon-upload {
+    animation-name: stat-upload;
+  }
+
+  .stat-icon-ping {
+    animation-name: stat-ping;
+  }
+
+  .stat-icon-jitter {
+    animation-name: stat-jitter;
+  }
+}
+
+@keyframes status-ecg {
+  0%, 100% {
+    opacity: 0.72;
+    transform: scaleX(1) scaleY(1);
+    filter: drop-shadow(0 0 0 hsl(var(--primary) / 0));
+  }
+  12% {
+    opacity: 1;
+    transform: scaleX(1.08) scaleY(0.9);
+    filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.45));
+  }
+  18% {
+    transform: scaleX(0.9) scaleY(1.28);
+  }
+  26% {
+    transform: scaleX(1.05) scaleY(0.94);
+  }
+  38% {
+    opacity: 0.84;
+    transform: scaleX(1) scaleY(1);
+  }
+}
+
+@keyframes stat-download {
+  0%, 100% { transform: translateY(0); filter: drop-shadow(0 0 0 currentColor); }
+  42% { transform: translateY(2px); filter: drop-shadow(0 0 4px currentColor); }
+  62% { transform: translateY(-1px); }
+}
+
+@keyframes stat-upload {
+  0%, 100% { transform: translateY(0); filter: drop-shadow(0 0 0 currentColor); }
+  42% { transform: translateY(-2px); filter: drop-shadow(0 0 4px currentColor); }
+  62% { transform: translateY(1px); }
+}
+
+@keyframes stat-ping {
+  0%, 100% { transform: scale(1); opacity: 0.78; filter: drop-shadow(0 0 0 currentColor); }
+  36% { transform: scale(1.16); opacity: 1; filter: drop-shadow(0 0 5px currentColor); }
+  56% { transform: scale(0.96); }
+}
+
+@keyframes stat-jitter {
+  0%, 100% { transform: translateX(0); filter: drop-shadow(0 0 0 currentColor); }
+  24% { transform: translateX(-1px); }
+  42% { transform: translateX(1.5px); filter: drop-shadow(0 0 4px currentColor); }
+  60% { transform: translateX(-0.75px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-ecg,
+  .stat-icon-download,
+  .stat-icon-upload,
+  .stat-icon-ping,
+  .stat-icon-jitter {
+    animation: none;
+  }
 }
 
 /* recharts custom tooltip */

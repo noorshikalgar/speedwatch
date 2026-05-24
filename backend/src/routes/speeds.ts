@@ -23,6 +23,13 @@ function csvEscape(value: unknown): string {
   return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
+function exportName(parts: string[]) {
+  return `${parts
+    .map(part => part.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''))
+    .filter(Boolean)
+    .join('-')}.csv`;
+}
+
 router.get('/export.csv', (req, res) => {
   const range = (req.query.range as string) ?? '30d';
   const rows = getSpeedResults(rangeToIso(range), 5000) as Record<string, unknown>[];
@@ -32,7 +39,7 @@ router.get('/export.csv', (req, res) => {
     ...rows.map(row => columns.map(column => csvEscape(row[column])).join(',')),
   ].join('\n');
   res.header('Content-Type', 'text/csv');
-  res.attachment(`speedwatch-speed-tests-${range}.csv`);
+  res.attachment(exportName(['speedwatch', 'all-speed-tests', range]));
   res.send(csv);
 });
 

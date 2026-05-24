@@ -47,7 +47,11 @@ export interface Settings {
   notify_site_down: boolean;
   notify_site_slow: boolean;
   notify_speed_low: boolean;
+  alert_cooldown_minutes: number;
   public_status_enabled: boolean;
+  public_status_title: string;
+  public_status_message: string;
+  public_status_show_latency: boolean;
   github_star_enabled: boolean;
   github_repo_url: string;
   latency_sites: string[];
@@ -64,6 +68,12 @@ export interface MySite {
   latency_threshold_ms: number;
   interval_minutes: number;
   enabled: number;
+  notify_down: number;
+  notify_slow: number;
+  maintenance_windows: string;
+  check_tls: number;
+  check_dns: number;
+  expected_dns: string;
   created_at: string;
   last_checked_at: string | null;
   last_latency_ms: number | null;
@@ -143,6 +153,12 @@ export type MySitePayload = {
   latency_threshold_ms: number;
   interval_minutes: number;
   enabled: boolean;
+  notify_down: boolean;
+  notify_slow: boolean;
+  maintenance_windows: string;
+  check_tls: boolean;
+  check_dns: boolean;
+  expected_dns: string;
 };
 
 const API = '/api';
@@ -173,8 +189,19 @@ export const settingsApi = {
     }),
 };
 
+export const backupApi = {
+  exportUrl: () => `${API}/backup/config.json`,
+  importConfig: (data: unknown) =>
+    api<{ success: boolean; imported_sites: number }>('/backup/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+};
+
 export const latencyApi = {
   list: (range: '24h' | '7d' | '30d') => api<LatencyCheck[]>(`/latency?range=${range}`),
+  run: () => api<{ success: boolean; checked: number; results: Array<Partial<LatencyCheck> & { url: string }> }>('/latency/run', { method: 'POST' }),
 };
 
 export const sitesApi = {
@@ -199,5 +226,5 @@ export const sitesApi = {
   checks: (range: '24h' | '7d' | '30d', limit = 1000) => api<SiteCheck[]>(`/sites/checks?range=${range}&limit=${limit}`),
   exportUrl: (range: '24h' | '7d' | '30d' = '30d') => `${API}/sites/export.csv?range=${range}`,
   exportSiteUrl: (id: number, range: '24h' | '7d' | '30d' = '30d') => `${API}/sites/${id}/export.csv?range=${range}`,
-  publicStatus: () => api<{ updated_at: string; sites: PublicStatusSite[] }>('/sites/public'),
+  publicStatus: () => api<{ title: string; message: string; show_latency: boolean; updated_at: string; sites: PublicStatusSite[] }>('/sites/public'),
 };

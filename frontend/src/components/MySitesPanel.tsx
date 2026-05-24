@@ -47,12 +47,31 @@ function AddSiteForm({ onAdd, isPending }: {
     latency_threshold_ms: 500,
     interval_minutes: 15,
     enabled: true,
+    notify_down: true,
+    notify_slow: true,
+    maintenance_windows: '[]',
+    check_tls: false,
+    check_dns: false,
+    expected_dns: '',
   });
 
   function submit() {
     if (!form.url.startsWith('http')) return;
     onAdd({ ...form, interval_minutes: Math.max(15, form.interval_minutes) });
-    setForm({ name: '', url: '', expected_status: 200, latency_threshold_ms: 500, interval_minutes: 15, enabled: true });
+    setForm({
+      name: '',
+      url: '',
+      expected_status: 200,
+      latency_threshold_ms: 500,
+      interval_minutes: 15,
+      enabled: true,
+      notify_down: true,
+      notify_slow: true,
+      maintenance_windows: '[]',
+      check_tls: false,
+      check_dns: false,
+      expected_dns: '',
+    });
   }
 
   return (

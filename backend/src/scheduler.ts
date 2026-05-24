@@ -34,10 +34,13 @@ function nextProvider(): SpeedTestProvider {
     return normalizeSpeedTestProvider(getSetting('speed_test_provider') ?? 'cloudflare');
   }
 
+  const providers = getSetting('librespeed_server_url')?.trim()
+    ? [...ROUND_ROBIN_PROVIDERS, 'librespeed' as SpeedTestProvider]
+    : ROUND_ROBIN_PROVIDERS;
   const rawIndex = parseInt(getSetting('speed_test_round_robin_index') ?? '0', 10);
   const index = Number.isFinite(rawIndex) ? rawIndex : 0;
-  const provider = ROUND_ROBIN_PROVIDERS[index % ROUND_ROBIN_PROVIDERS.length];
-  setSetting('speed_test_round_robin_index', String((index + 1) % ROUND_ROBIN_PROVIDERS.length));
+  const provider = providers[index % providers.length];
+  setSetting('speed_test_round_robin_index', String((index + 1) % providers.length));
   return provider;
 }
 

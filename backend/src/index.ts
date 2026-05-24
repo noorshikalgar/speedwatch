@@ -8,6 +8,7 @@ import settingsRouter from './routes/settings.js';
 import latencyRouter from './routes/latency.js';
 import sitesRouter from './routes/sites.js';
 import metricsRouter from './routes/metrics.js';
+import backupRouter from './routes/backup.js';
 import { startScheduler } from './scheduler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -21,6 +22,7 @@ app.use('/api/speeds', speedsRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/latency', latencyRouter);
 app.use('/api/sites', sitesRouter);
+app.use('/api/backup', backupRouter);
 app.use('/metrics', metricsRouter);
 
 // Serve built frontend in production

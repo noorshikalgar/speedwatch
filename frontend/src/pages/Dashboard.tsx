@@ -263,7 +263,16 @@ export function Dashboard() {
     },
   });
 
+  const runLatencyMutation = useMutation({
+    mutationFn: latencyApi.run,
+    onSuccess: () => {
+      setRefreshKey(k => k + 1);
+      qc.invalidateQueries({ queryKey: ['latency'] });
+    },
+  });
+
   const isTestRunning = runMutation.isPending || status?.isRunning;
+  const isLatencyRunning = runLatencyMutation.isPending;
 
   function setView(nextView: ViewTab) {
     setViewState(nextView);
@@ -295,6 +304,14 @@ export function Dashboard() {
       {isTestRunning
         ? <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Testing…</>
         : <><Play          className="h-3.5 w-3.5" />             Run Test Now</>}
+    </Button>
+  );
+
+  const RunLatencyButton = (
+    <Button onClick={() => runLatencyMutation.mutate()} disabled={isLatencyRunning} size="sm" className="gap-2 shrink-0">
+      {isLatencyRunning
+        ? <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Checking…</>
+        : <><Activity className="h-3.5 w-3.5" /> Run Latency</>}
     </Button>
   );
 
@@ -367,6 +384,15 @@ export function Dashboard() {
 
           {/* ── Latency ── */}
           <TabsContent value="latency" className="space-y-4 mt-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center border border-info/35 bg-info/10 text-[11px] uppercase tracking-wider overflow-hidden">
+                  <span className="px-2 py-1 text-info/75">Targets</span>
+                  <span className="px-2 py-1 text-info border-l border-info/35">{settings?.latency_sites.length ?? 0}</span>
+                </div>
+              </div>
+              {RunLatencyButton}
+            </div>
             <LatencyChart data={latencyData} range={latencyRange} onRangeChange={setLatencyRange} timezone={settings?.display_timezone} />
             <LatencyTable data={latencyData} isLoading={latencyLoading} timezone={settings?.display_timezone} />
           </TabsContent>

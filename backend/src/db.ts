@@ -53,6 +53,12 @@ db.exec(`
     latency_threshold_ms INTEGER DEFAULT 500,
     interval_minutes INTEGER DEFAULT 15,
     enabled INTEGER DEFAULT 1,
+    notify_down INTEGER DEFAULT 1,
+    notify_slow INTEGER DEFAULT 1,
+    maintenance_windows TEXT DEFAULT '[]',
+    check_tls INTEGER DEFAULT 0,
+    check_dns INTEGER DEFAULT 0,
+    expected_dns TEXT DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -123,6 +129,20 @@ for (const [column, sql] of missingSiteCheckColumns) {
   if (!siteCheckColumnNames.has(column)) db.exec(sql);
 }
 
+const mySiteColumns = db.prepare(`PRAGMA table_info(my_sites)`).all() as { name: string }[];
+const mySiteColumnNames = new Set(mySiteColumns.map(c => c.name));
+const missingMySiteColumns: [string, string][] = [
+  ['notify_down', `ALTER TABLE my_sites ADD COLUMN notify_down INTEGER DEFAULT 1`],
+  ['notify_slow', `ALTER TABLE my_sites ADD COLUMN notify_slow INTEGER DEFAULT 1`],
+  ['maintenance_windows', `ALTER TABLE my_sites ADD COLUMN maintenance_windows TEXT DEFAULT '[]'`],
+  ['check_tls', `ALTER TABLE my_sites ADD COLUMN check_tls INTEGER DEFAULT 0`],
+  ['check_dns', `ALTER TABLE my_sites ADD COLUMN check_dns INTEGER DEFAULT 0`],
+  ['expected_dns', `ALTER TABLE my_sites ADD COLUMN expected_dns TEXT DEFAULT ''`],
+];
+for (const [column, sql] of missingMySiteColumns) {
+  if (!mySiteColumnNames.has(column)) db.exec(sql);
+}
+
 export type MySiteInput = {
   name: string;
   url: string;
@@ -130,6 +150,12 @@ export type MySiteInput = {
   latency_threshold_ms: number;
   interval_minutes: number;
   enabled: boolean;
+  notify_down: boolean;
+  notify_slow: boolean;
+  maintenance_windows: string;
+  check_tls: boolean;
+  check_dns: boolean;
+  expected_dns: string;
 };
 
 const DEFAULTS: Record<string, string> = {
@@ -148,7 +174,11 @@ const DEFAULTS: Record<string, string> = {
   notify_site_down: 'true',
   notify_site_slow: 'true',
   notify_speed_low: 'true',
+  alert_cooldown_minutes: '30',
   public_status_enabled: 'false',
+  public_status_title: 'SpeedWatch Status',
+  public_status_message: '',
+  public_status_show_latency: 'true',
   github_star_enabled: 'true',
   github_repo_url: 'https://github.com/noorshikalgar/speedwatch',
   latency_sites: JSON.stringify(['https://google.com', 'https://cloudflare.com', 'https://github.com']),
@@ -246,6 +276,12 @@ function normalizeSiteInput(input: Partial<MySiteInput>): MySiteInput {
     latency_threshold_ms: Math.max(1, Number(input.latency_threshold_ms ?? 500)),
     interval_minutes: Math.max(15, Number(input.interval_minutes ?? 15)),
     enabled: input.enabled ?? true,
+    notify_down: input.notify_down ?? true,
+    notify_slow: input.notify_slow ?? true,
+    maintenance_windows: String(input.maintenance_windows ?? '[]'),
+    check_tls: input.check_tls ?? false,
+    check_dns: input.check_dns ?? false,
+    expected_dns: String(input.expected_dns ?? '').trim(),
   };
 }
 
@@ -267,9 +303,22 @@ export function listMySites() {
 export function createMySite(input: Partial<MySiteInput>) {
   const site = normalizeSiteInput(input);
   return db.prepare(`
-    INSERT INTO my_sites (name, url, expected_status, latency_threshold_ms, interval_minutes, enabled)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(site.name, site.url, site.expected_status, site.latency_threshold_ms, site.interval_minutes, site.enabled ? 1 : 0);
+    INSERT INTO my_sites (name, url, expected_status, latency_threshold_ms, interval_minutes, enabled, notify_down, notify_slow, maintenance_windows, check_tls, check_dns, expected_dns)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    site.name,
+    site.url,
+    site.expected_status,
+    site.latency_threshold_ms,
+    site.interval_minutes,
+    site.enabled ? 1 : 0,
+    site.notify_down ? 1 : 0,
+    site.notify_slow ? 1 : 0,
+    site.maintenance_windows,
+    site.check_tls ? 1 : 0,
+    site.check_dns ? 1 : 0,
+    site.expected_dns,
+  );
 }
 
 export function updateMySite(id: number, input: Partial<MySiteInput>) {
@@ -278,9 +327,23 @@ export function updateMySite(id: number, input: Partial<MySiteInput>) {
   const site = normalizeSiteInput({ ...current, ...input });
   return db.prepare(`
     UPDATE my_sites
-    SET name = ?, url = ?, expected_status = ?, latency_threshold_ms = ?, interval_minutes = ?, enabled = ?
+    SET name = ?, url = ?, expected_status = ?, latency_threshold_ms = ?, interval_minutes = ?, enabled = ?, notify_down = ?, notify_slow = ?, maintenance_windows = ?, check_tls = ?, check_dns = ?, expected_dns = ?
     WHERE id = ?
-  `).run(site.name, site.url, site.expected_status, site.latency_threshold_ms, site.interval_minutes, site.enabled ? 1 : 0, id);
+  `).run(
+    site.name,
+    site.url,
+    site.expected_status,
+    site.latency_threshold_ms,
+    site.interval_minutes,
+    site.enabled ? 1 : 0,
+    site.notify_down ? 1 : 0,
+    site.notify_slow ? 1 : 0,
+    site.maintenance_windows,
+    site.check_tls ? 1 : 0,
+    site.check_dns ? 1 : 0,
+    site.expected_dns,
+    id,
+  );
 }
 
 export function deleteMySite(id: number) {

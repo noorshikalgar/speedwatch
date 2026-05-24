@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { getLatencyResults } from '../db.js';
+import { checkLatency } from '../latency.js';
+import { getLatencyResults, getSetting, insertLatencyCheck } from '../db.js';
 
 const router = Router();
 
@@ -14,6 +15,20 @@ router.get('/', (req, res) => {
   const range = (req.query.range as string) ?? '24h';
   const since = rangeToIso(range);
   res.json(getLatencyResults(since));
+});
+
+router.post('/run', async (_req, res) => {
+  const sitesRaw = getSetting('latency_sites') ?? '[]';
+  const sites = JSON.parse(sitesRaw) as string[];
+  const results = [];
+
+  for (const url of sites) {
+    const result = await checkLatency(url);
+    insertLatencyCheck(url, result);
+    results.push({ url, ...result });
+  }
+
+  res.json({ success: true, checked: results.length, results });
 });
 
 export default router;
