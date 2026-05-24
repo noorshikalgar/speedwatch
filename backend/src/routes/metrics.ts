@@ -90,6 +90,10 @@ router.get('/', (_req, res) => {
     ...help('speedwatch_site_up', 'Whether the latest site check is healthy enough to be considered up.'),
     ...help('speedwatch_site_latency_ms', 'Latest site check latency in milliseconds.'),
     ...help('speedwatch_site_http_status', 'Latest site check HTTP status code.'),
+    ...help('speedwatch_site_tls_valid', 'Whether the latest TLS certificate check is valid.'),
+    ...help('speedwatch_site_tls_days_left', 'Days until the latest TLS certificate expires.'),
+    ...help('speedwatch_site_dns_lookup_ms', 'Latest DNS lookup duration in milliseconds.'),
+    ...help('speedwatch_site_dns_matches', 'Whether the latest DNS records match the configured expected DNS value.'),
     ...help('speedwatch_site_enabled', 'Whether the site monitor is enabled.'),
     ...help('speedwatch_site_uptime_percent', 'Site uptime percentage by window.'),
     ...help('speedwatch_site_health_score', 'Site health score from 0 to 100 by window.'),
@@ -106,6 +110,10 @@ router.get('/', (_req, res) => {
     if (latest) {
       out.push(line('speedwatch_site_latency_ms', latest.latency_ms, base) ?? '');
       out.push(line('speedwatch_site_http_status', latest.http_status, base) ?? '');
+      out.push(line('speedwatch_site_tls_valid', latest.tls_valid, base) ?? '');
+      out.push(line('speedwatch_site_tls_days_left', latest.tls_days_left, base) ?? '');
+      out.push(line('speedwatch_site_dns_lookup_ms', latest.dns_ms, base) ?? '');
+      out.push(line('speedwatch_site_dns_matches', latest.dns_matches, base) ?? '');
       const ts = unixSeconds(latest.timestamp);
       if (ts != null) out.push(line('speedwatch_site_last_check_timestamp_seconds', ts, base)!);
     }

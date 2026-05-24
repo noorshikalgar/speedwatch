@@ -52,6 +52,10 @@ export interface Settings {
   public_status_title: string;
   public_status_message: string;
   public_status_show_latency: boolean;
+  public_status_show_speed: boolean;
+  public_status_show_latency_summary: boolean;
+  public_status_site_ids: number[];
+  public_status_refresh_seconds: number;
   github_star_enabled: boolean;
   github_repo_url: string;
   latency_sites: string[];
@@ -98,6 +102,15 @@ export interface SiteCheck {
   status: string;
   status_reason: string;
   error_message: string;
+  tls_valid: number | null;
+  tls_expires_at: string;
+  tls_days_left: number | null;
+  tls_issuer: string;
+  tls_error: string;
+  dns_ms: number | null;
+  dns_resolved: string;
+  dns_matches: number | null;
+  dns_error: string;
 }
 
 export interface SiteStats {
@@ -144,6 +157,27 @@ export interface PublicStatusSite {
   last_checked_at: string | null;
   latency_ms: number | null;
   stats: Record<'24h' | '7d' | '30d', SiteStats>;
+}
+
+export interface PublicStatusLatencySummary {
+  total: number;
+  ok: number;
+  avg_ms: number | null;
+  latest_ms: number | null;
+  latest_at: string | null;
+}
+
+export interface PublicStatus {
+  title: string;
+  message: string;
+  show_latency: boolean;
+  show_speed: boolean;
+  show_latency_summary: boolean;
+  updated_at: string;
+  refresh_seconds: number;
+  speed: SpeedResult | null;
+  latency: PublicStatusLatencySummary | null;
+  sites: PublicStatusSite[];
 }
 
 export type MySitePayload = {
@@ -226,5 +260,5 @@ export const sitesApi = {
   checks: (range: '24h' | '7d' | '30d', limit = 1000) => api<SiteCheck[]>(`/sites/checks?range=${range}&limit=${limit}`),
   exportUrl: (range: '24h' | '7d' | '30d' = '30d') => `${API}/sites/export.csv?range=${range}`,
   exportSiteUrl: (id: number, range: '24h' | '7d' | '30d' = '30d') => `${API}/sites/${id}/export.csv?range=${range}`,
-  publicStatus: () => api<{ title: string; message: string; show_latency: boolean; updated_at: string; sites: PublicStatusSite[] }>('/sites/public'),
+  publicStatus: () => api<PublicStatus>('/sites/public'),
 };

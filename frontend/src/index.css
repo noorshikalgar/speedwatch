@@ -258,7 +258,8 @@
   .stat-icon-download,
   .stat-icon-upload,
   .stat-icon-ping,
-  .stat-icon-jitter {
+  .stat-icon-jitter,
+  .metric-icon {
     transform-origin: center;
     animation-duration: 1.9s;
     animation-iteration-count: infinite;
@@ -274,6 +275,10 @@
   }
 
   .stat-icon-ping {
+    animation-name: stat-ping;
+  }
+
+  .metric-icon {
     animation-name: stat-ping;
   }
 
@@ -335,7 +340,8 @@
   .stat-icon-download,
   .stat-icon-upload,
   .stat-icon-ping,
-  .stat-icon-jitter {
+  .stat-icon-jitter,
+  .metric-icon {
     animation: none;
   }
 }

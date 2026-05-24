@@ -16,16 +16,14 @@ function host(url: string) {
 
 function statusTone(status?: string | null) {
   if (status === 'ok') return 'bg-success';
-  if (status === 'slow') return 'bg-warning';
-  if (status === 'timeout') return 'bg-warning';
+  if (status === 'slow' || status === 'timeout' || status === 'tls_expiring' || status === 'dns_slow') return 'bg-warning';
   if (!status) return 'bg-muted';
   return 'bg-destructive';
 }
 
 function statusBadge(status?: string | null) {
   if (status === 'ok') return <Badge variant="success">ok</Badge>;
-  if (status === 'slow') return <Badge variant="warning">slow</Badge>;
-  if (status === 'timeout') return <Badge variant="warning">timeout</Badge>;
+  if (status === 'slow' || status === 'timeout' || status === 'tls_expiring' || status === 'dns_slow') return <Badge variant="warning">{status}</Badge>;
   if (status === 'disabled') return <Badge variant="outline" className="text-muted-foreground">off</Badge>;
   return <Badge variant="destructive">{status ?? 'none'}</Badge>;
 }

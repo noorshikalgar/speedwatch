@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { sitesApi, type MySitePayload, type SiteCheck } from '@/api/client';
-import { cn } from '@/lib/utils';
+import { cn, compactNumber } from '@/lib/utils';
 import { formatActivityTime } from '@/lib/datetime';
 
 type Range = '24h' | '7d' | '30d';
@@ -19,13 +19,22 @@ const INCIDENT_PREVIEW_LIMIT = 50;
 
 function statusBadge(status?: string | null) {
   if (status === 'ok') return <Badge variant="success">ok</Badge>;
-  if (status === 'slow' || status === 'timeout') return <Badge variant="warning">{status}</Badge>;
+  if (status === 'slow' || status === 'timeout' || status === 'tls_expiring' || status === 'dns_slow') return <Badge variant="warning">{status}</Badge>;
   if (!status) return <Badge variant="outline">none</Badge>;
   return <Badge variant="destructive">{status}</Badge>;
 }
 
 function statText(value: number | null | undefined, suffix = '') {
   return value == null ? '—' : `${value}${suffix}`;
+}
+
+function dnsRecords(value?: string | null) {
+  try {
+    const records = JSON.parse(value || '[]');
+    return Array.isArray(records) && records.length ? records.join(', ') : '—';
+  } catch {
+    return value || '—';
+  }
 }
 
 function MiniLatencyChart({ checks, timezone }: { checks: SiteCheck[]; timezone?: string | null }) {
@@ -263,11 +272,12 @@ export function SiteDetailsPage() {
               </Card>
             )}
 
-            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
               <Card><CardContent className="p-4"><CardTitle>Health</CardTitle><div className="mt-2 text-2xl font-semibold">{statText(data.stats['7d'].health_score)}/100</div></CardContent></Card>
               <Card><CardContent className="p-4"><CardTitle>24h Uptime</CardTitle><div className="mt-2 text-2xl font-semibold">{statText(data.stats['24h'].uptime_pct, '%')}</div></CardContent></Card>
               <Card><CardContent className="p-4"><CardTitle>7d Uptime</CardTitle><div className="mt-2 text-2xl font-semibold">{statText(data.stats['7d'].uptime_pct, '%')}</div></CardContent></Card>
               <Card><CardContent className="p-4"><CardTitle>30d Uptime</CardTitle><div className="mt-2 text-2xl font-semibold">{statText(data.stats['30d'].uptime_pct, '%')}</div></CardContent></Card>
+              <Card><CardContent className="p-4"><CardTitle>Checks</CardTitle><div className="mt-2 text-2xl font-semibold tabular-nums" title={String(data.stats[range].total)}>{compactNumber(data.stats[range].total)}</div></CardContent></Card>
             </div>
 
             <Card>
@@ -304,6 +314,24 @@ export function SiteDetailsPage() {
                     <div className="uppercase tracking-wider text-muted-foreground">Limit</div>
                     <div className="text-lg font-semibold tabular-nums">{data.site.latency_threshold_ms} ms</div>
                   </div>
+                  {data.site.check_tls === 1 && (
+                    <div className="flex min-h-[72px] flex-col justify-between border border-border bg-background px-3 py-2 lg:col-span-3">
+                      <div className="uppercase tracking-wider text-muted-foreground">TLS Certificate</div>
+                      <div className="truncate text-foreground">
+                        {latest?.tls_valid == null ? '—' : latest.tls_valid === 1 ? `valid · ${statText(latest.tls_days_left, ' days left')}` : latest.tls_error || 'invalid'}
+                      </div>
+                      {latest?.tls_expires_at && <div className="truncate text-[11px] text-muted-foreground">Expires {formatActivityTime(latest.tls_expires_at, undefined, true)} · {latest.tls_issuer || 'unknown issuer'}</div>}
+                    </div>
+                  )}
+                  {data.site.check_dns === 1 && (
+                    <div className="flex min-h-[72px] flex-col justify-between border border-border bg-background px-3 py-2 lg:col-span-3">
+                      <div className="uppercase tracking-wider text-muted-foreground">DNS Resolution</div>
+                      <div className="truncate text-foreground">
+                        {latest?.dns_error ? latest.dns_error : `${statText(latest?.dns_ms, ' ms')} · ${latest?.dns_matches == null ? 'recorded' : latest.dns_matches === 1 ? 'matches expected' : 'mismatch'}`}
+                      </div>
+                      <div className="truncate text-[11px] text-muted-foreground">{dnsRecords(latest?.dns_resolved)}</div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

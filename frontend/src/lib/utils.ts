@@ -44,6 +44,21 @@ export function fmtMs(n: number | null): string {
   return `${Math.round(n)}`;
 }
 
+export function compactNumber(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return '—';
+  const abs = Math.abs(value);
+  const units = [
+    { value: 1_000_000_000, suffix: 'B' },
+    { value: 1_000_000, suffix: 'M' },
+    { value: 1_000, suffix: 'K' },
+  ];
+  const unit = units.find(item => abs >= item.value);
+  if (!unit) return String(value);
+  const scaled = value / unit.value;
+  const formatted = scaled >= 10 ? scaled.toFixed(0) : scaled.toFixed(1);
+  return `${formatted.replace(/\.0$/, '')}${unit.suffix}`;
+}
+
 export function speedStatus(actual: number | null, plan: number, thresholdPct: number): 'good' | 'warn' | 'low' {
   if (actual === null) return 'warn';
   const ratio = actual / plan;

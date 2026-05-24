@@ -1,9 +1,11 @@
 import { Router } from 'express';
-import { checkLatency } from '../latency.js';
+import { checkSiteMonitor } from '../site-monitor.js';
 import {
   createMySite,
   deleteMySite,
   getAllSiteChecksSince,
+  getLatestSpeed,
+  getLatencyResults,
   getMySite,
   getSetting,
   getSiteChecksForSite,
@@ -70,6 +72,29 @@ function statsWindows(checks: any[], now = Date.now()) {
     key,
     statsFor(checks.filter(check => now - checkTime(check) <= days * 86_400_000)),
   ]));
+}
+
+function parsePublicSiteIds(value: string | undefined) {
+  try {
+    const ids = JSON.parse(value || '[]');
+    return Array.isArray(ids) ? new Set(ids.map(Number).filter(Number.isFinite)) : new Set<number>();
+  } catch {
+    return new Set<number>();
+  }
+}
+
+function latencySummary(checks: any[]) {
+  const values = checks.map(check => check.latency_ms).filter((value): value is number => value != null);
+  const ok = checks.filter(check => check.status === 'ok').length;
+  const latest = checks.at(-1) ?? null;
+
+  return {
+    total: checks.length,
+    ok,
+    avg_ms: values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : null,
+    latest_ms: latest?.latency_ms ?? null,
+    latest_at: latest?.timestamp ?? null,
+  };
 }
 
 function buildIncidents(checks: any[]) {
@@ -140,7 +165,7 @@ function inMaintenance(site: any, now = new Date()) {
 
 async function runSiteCheck(site: any) {
   const previous = getSiteChecksForSite(Number(site.id), rangeToIso('30d'), 1).at(-1) as any;
-  const result = await checkLatency(site.url);
+  const result = await checkSiteMonitor(site);
   const insert = insertSiteCheck(site, result);
   const latest = (getSiteChecksForSite(Number(site.id), rangeToIso('30d'), 1).at(-1) as any) ?? null;
   const previousHealthy = !previous || previous.status === 'ok';
@@ -193,13 +218,21 @@ router.get('/public', (_req, res) => {
   const checks = withStatusReasons(getAllSiteChecksSince(rangeToIso('30d'), 5000) as any[]);
   const bySite = new Map<number, any[]>();
   for (const check of checks) bySite.set(Number(check.site_id), [...(bySite.get(Number(check.site_id)) ?? []), check]);
+  const selectedSiteIds = parsePublicSiteIds(getSetting('public_status_site_ids'));
+  const showSpeed = getSetting('public_status_show_speed') !== 'false';
+  const showLatencySummary = getSetting('public_status_show_latency_summary') !== 'false';
 
   res.json({
     title: getSetting('public_status_title') || 'SpeedWatch Status',
     message: getSetting('public_status_message') || '',
     show_latency: getSetting('public_status_show_latency') !== 'false',
+    show_speed: showSpeed,
+    show_latency_summary: showLatencySummary,
     updated_at: new Date().toISOString(),
-    sites: sites.filter(site => site.enabled === 1).map(site => {
+    refresh_seconds: Math.min(3600, Math.max(5, parseInt(getSetting('public_status_refresh_seconds') || '60', 10) || 60)),
+    speed: showSpeed ? getLatestSpeed() ?? null : null,
+    latency: showLatencySummary ? latencySummary(getLatencyResults(rangeToIso('24h'), 500) as any[]) : null,
+    sites: sites.filter(site => site.enabled === 1 && (selectedSiteIds.size === 0 || selectedSiteIds.has(Number(site.id)))).map(site => {
       const siteChecks = bySite.get(Number(site.id)) ?? [];
       const latest = siteChecks.at(-1) ?? null;
       return {
@@ -218,7 +251,7 @@ router.get('/public', (_req, res) => {
 router.get('/export.csv', (req, res) => {
   const range = (req.query.range as string) ?? '30d';
   const rows = withStatusReasons(getSiteChecks(rangeToIso(range), 5000) as any[]);
-  const columns = ['timestamp', 'site_name', 'url', 'final_url', 'latency_ms', 'http_status', 'expected_status', 'latency_threshold_ms', 'status', 'status_reason', 'error_message'];
+  const columns = ['timestamp', 'site_name', 'url', 'final_url', 'latency_ms', 'http_status', 'expected_status', 'latency_threshold_ms', 'status', 'status_reason', 'error_message', 'tls_valid', 'tls_expires_at', 'tls_days_left', 'tls_issuer', 'tls_error', 'dns_ms', 'dns_resolved', 'dns_matches', 'dns_error'];
   res.header('Content-Type', 'text/csv');
   res.attachment(exportName(['speedwatch', 'all-sites', 'site-checks', range]));
   res.send(toCsv(rows, columns));
@@ -296,7 +329,7 @@ router.get('/:id/export.csv', (req, res) => {
   if (!site) return res.status(404).json({ success: false, error: 'site not found' });
   const range = (req.query.range as string) ?? '30d';
   const rows = withStatusReasons(getSiteChecksForSite(id, rangeToIso(range), 5000) as any[]);
-  const columns = ['timestamp', 'site_name', 'url', 'final_url', 'latency_ms', 'http_status', 'expected_status', 'latency_threshold_ms', 'status', 'status_reason', 'error_message'];
+  const columns = ['timestamp', 'site_name', 'url', 'final_url', 'latency_ms', 'http_status', 'expected_status', 'latency_threshold_ms', 'status', 'status_reason', 'error_message', 'tls_valid', 'tls_expires_at', 'tls_days_left', 'tls_issuer', 'tls_error', 'dns_ms', 'dns_resolved', 'dns_matches', 'dns_error'];
   res.header('Content-Type', 'text/csv');
   res.attachment(exportName(['speedwatch', String(site.name), 'site-checks', range]));
   res.send(toCsv(rows, columns));

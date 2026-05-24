@@ -78,6 +78,15 @@ db.exec(`
     status TEXT NOT NULL,
     status_reason TEXT DEFAULT '',
     error_message TEXT DEFAULT '',
+    tls_valid INTEGER,
+    tls_expires_at TEXT DEFAULT '',
+    tls_days_left INTEGER,
+    tls_issuer TEXT DEFAULT '',
+    tls_error TEXT DEFAULT '',
+    dns_ms REAL,
+    dns_resolved TEXT DEFAULT '',
+    dns_matches INTEGER,
+    dns_error TEXT DEFAULT '',
     FOREIGN KEY(site_id) REFERENCES my_sites(id) ON DELETE CASCADE
   );
 
@@ -124,6 +133,15 @@ const siteCheckColumns = db.prepare(`PRAGMA table_info(site_checks)`).all() as {
 const siteCheckColumnNames = new Set(siteCheckColumns.map(c => c.name));
 const missingSiteCheckColumns: [string, string][] = [
   ['status_reason', `ALTER TABLE site_checks ADD COLUMN status_reason TEXT DEFAULT ''`],
+  ['tls_valid', `ALTER TABLE site_checks ADD COLUMN tls_valid INTEGER`],
+  ['tls_expires_at', `ALTER TABLE site_checks ADD COLUMN tls_expires_at TEXT DEFAULT ''`],
+  ['tls_days_left', `ALTER TABLE site_checks ADD COLUMN tls_days_left INTEGER`],
+  ['tls_issuer', `ALTER TABLE site_checks ADD COLUMN tls_issuer TEXT DEFAULT ''`],
+  ['tls_error', `ALTER TABLE site_checks ADD COLUMN tls_error TEXT DEFAULT ''`],
+  ['dns_ms', `ALTER TABLE site_checks ADD COLUMN dns_ms REAL`],
+  ['dns_resolved', `ALTER TABLE site_checks ADD COLUMN dns_resolved TEXT DEFAULT ''`],
+  ['dns_matches', `ALTER TABLE site_checks ADD COLUMN dns_matches INTEGER`],
+  ['dns_error', `ALTER TABLE site_checks ADD COLUMN dns_error TEXT DEFAULT ''`],
 ];
 for (const [column, sql] of missingSiteCheckColumns) {
   if (!siteCheckColumnNames.has(column)) db.exec(sql);
@@ -179,6 +197,10 @@ const DEFAULTS: Record<string, string> = {
   public_status_title: 'SpeedWatch Status',
   public_status_message: '',
   public_status_show_latency: 'true',
+  public_status_show_speed: 'true',
+  public_status_show_latency_summary: 'true',
+  public_status_site_ids: '[]',
+  public_status_refresh_seconds: '60',
   github_star_enabled: 'true',
   github_repo_url: 'https://github.com/noorshikalgar/speedwatch',
   latency_sites: JSON.stringify(['https://google.com', 'https://cloudflare.com', 'https://github.com']),
@@ -388,6 +410,15 @@ export function insertSiteCheck(site: any, result: {
   response_server: string;
   content_type: string;
   error_message: string;
+  tls_valid?: boolean | null;
+  tls_expires_at?: string;
+  tls_days_left?: number | null;
+  tls_issuer?: string;
+  tls_error?: string;
+  dns_ms?: number | null;
+  dns_resolved?: string;
+  dns_matches?: boolean | null;
+  dns_error?: string;
 }) {
   const expectedStatus = Number(site.expected_status ?? 200);
   const threshold = Number(site.latency_threshold_ms ?? 500);
@@ -395,6 +426,16 @@ export function insertSiteCheck(site: any, result: {
     ? result.status
     : result.http_status !== expectedStatus
       ? 'bad_status'
+      : site.check_tls === 1 && result.tls_valid === false
+        ? 'tls_error'
+        : site.check_tls === 1 && result.tls_days_left != null && result.tls_days_left <= 14
+          ? 'tls_expiring'
+          : site.check_dns === 1 && result.dns_error
+            ? 'dns_error'
+            : site.check_dns === 1 && result.dns_matches === false
+              ? 'dns_mismatch'
+              : site.check_dns === 1 && result.dns_ms != null && result.dns_ms > 250
+                ? 'dns_slow'
       : result.latency_ms != null && result.latency_ms > threshold
         ? 'slow'
         : 'ok';
@@ -405,11 +446,17 @@ export function insertSiteCheck(site: any, result: {
     expected_status: expectedStatus,
     latency_threshold_ms: threshold,
     error_message: result.error_message,
+    tls_days_left: result.tls_days_left,
+    tls_error: result.tls_error,
+    dns_ms: result.dns_ms,
+    dns_error: result.dns_error,
+    dns_resolved: result.dns_resolved,
+    expected_dns: site.expected_dns,
   });
 
   return db.prepare(`
-    INSERT INTO site_checks (site_id, timestamp, url, final_url, latency_ms, http_status, expected_status, latency_threshold_ms, status_text, response_server, content_type, status, status_reason, error_message)
-    VALUES (?, datetime('now'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO site_checks (site_id, timestamp, url, final_url, latency_ms, http_status, expected_status, latency_threshold_ms, status_text, response_server, content_type, status, status_reason, error_message, tls_valid, tls_expires_at, tls_days_left, tls_issuer, tls_error, dns_ms, dns_resolved, dns_matches, dns_error)
+    VALUES (?, datetime('now'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     site.id,
     site.url,
@@ -424,6 +471,15 @@ export function insertSiteCheck(site: any, result: {
     status,
     statusReason,
     result.error_message,
+    result.tls_valid == null ? null : result.tls_valid ? 1 : 0,
+    result.tls_expires_at ?? '',
+    result.tls_days_left ?? null,
+    result.tls_issuer ?? '',
+    result.tls_error ?? '',
+    result.dns_ms ?? null,
+    result.dns_resolved ?? '',
+    result.dns_matches == null ? null : result.dns_matches ? 1 : 0,
+    result.dns_error ?? '',
   );
 }
 
@@ -434,6 +490,12 @@ export function siteStatusReason(check: {
   expected_status: number;
   latency_threshold_ms: number;
   error_message?: string | null;
+  tls_days_left?: number | null;
+  tls_error?: string | null;
+  dns_ms?: number | null;
+  dns_error?: string | null;
+  dns_resolved?: string | null;
+  expected_dns?: string | null;
 }) {
   if (check.status === 'ok') return 'Healthy';
   if (check.status === 'slow') {
@@ -442,6 +504,11 @@ export function siteStatusReason(check: {
   if (check.status === 'bad_status') {
     return `Expected HTTP ${check.expected_status}, got ${check.http_status ?? 'none'}`;
   }
+  if (check.status === 'tls_error') return check.tls_error || 'TLS certificate check failed';
+  if (check.status === 'tls_expiring') return `TLS certificate expires in ${check.tls_days_left ?? 0} days`;
+  if (check.status === 'dns_error') return check.dns_error || 'DNS lookup failed';
+  if (check.status === 'dns_mismatch') return `Expected DNS ${check.expected_dns || 'record'} was not found`;
+  if (check.status === 'dns_slow') return `DNS lookup took ${Math.round(check.dns_ms ?? 0)} ms`;
   if (check.status === 'timeout') return 'Request timed out';
   if (check.error_message) return check.error_message;
   return check.status.replace(/_/g, ' ');
