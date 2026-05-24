@@ -24,6 +24,25 @@
 
 ---
 
+## Screenshots
+
+### Combined Dashboard
+![SpeedWatch combined dashboard](assets/screenshots/SpeedWatch-Combined.png)
+
+### Speed Test History
+![SpeedWatch speed test history](assets/screenshots/SpeedWatch-Speed-Test.png)
+
+### Latency Monitoring
+![SpeedWatch latency monitoring](assets/screenshots/SpeedWatch-Latency.png)
+
+### Site Monitoring
+![SpeedWatch site monitoring](assets/screenshots/SpeedWatch-My-Sites.png)
+
+### Latency Monitoring
+![SpeedWatch site details](assets/screenshots/SpeedWatch-Site-Details.png)
+
+---
+
 ## Why SpeedWatch?
 
 SpeedWatch runs scheduled speed tests, stores the results locally, and turns them into a clean dashboard with download, upload, ping, latency, provider, and history views.
