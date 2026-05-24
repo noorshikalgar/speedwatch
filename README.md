@@ -217,3 +217,5 @@ SpeedWatch is built for homelabs, small offices, creators, and anyone who wants 
 <p align="center">
   Built with TypeScript, SQLite, and a healthy suspicion of "it works on my machine".
 </p>
+
+This project is licensed under the [MIT License](LICENSE).
